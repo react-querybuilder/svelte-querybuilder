@@ -1,0 +1,39 @@
+{
+  "name": "svelte-querybuilder-monorepo",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "workspaces": [
+    "packages/*",
+    "examples/*"
+  ],
+  "scripts": {
+    "build": "bun run --filter svelte-querybuilder build",
+    "check": "bun run --filter svelte-querybuilder check",
+    "lint": "oxlint",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ssr": "echo 'test:ssr is implemented in step 8'",
+    "test:coverage": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "@sveltejs/package": "^2.5.8",
+    "@sveltejs/vite-plugin-svelte": "^7.2.0",
+    "@testing-library/jest-dom": "^6.10.0",
+    "@testing-library/svelte": "^5.4.2",
+    "@testing-library/user-event": "^14.6.3",
+    "@vitest/coverage-v8": "^4.1.10",
+    "jsdom": "^30.0.1",
+    "oxfmt": "^0.62.0",
+    "oxlint": "^1.77.0",
+    "sass": "^1.102.0",
+    "svelte": "^5.56.8",
+    "svelte-check": "^4.7.4",
+    "typescript": "^5.9.3",
+    "vite": "^8.2.0",
+    "vitest": "^4.1.10",
+    "vitest-axe": "^0.1.0"
+  }
+}
