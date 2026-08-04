@@ -6,4 +6,5 @@
  * dependency.
  */
 
+export type * from './types';
 export * from '@react-querybuilder/core';

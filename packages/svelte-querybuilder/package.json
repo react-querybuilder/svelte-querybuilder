@@ -31,6 +31,7 @@
   "files": [
     "dist",
     "!dist/**/*.test.*",
+    "!dist/**/*.test-d.*",
     "!dist/**/*.spec.*"
   ],
   "exports": {
@@ -44,7 +45,7 @@
   },
   "scripts": {
     "build": "bun run build:main && bun run build:css",
-    "build:main": "svelte-package -i src/lib -o dist && find dist \\( -name '*.test.*' -o -name '*.spec.*' \\) -delete",
+    "build:main": "svelte-package -i src/lib -o dist && find dist \\( -name '*.test.*' -o -name '*.test-d.*' -o -name '*.spec.*' \\) -delete",
     "build:css": "mkdir -p dist/styles && cp ../../node_modules/@react-querybuilder/core/dist/*.scss dist && cp ../../node_modules/@react-querybuilder/core/dist/styles/*.scss dist/styles && cp -f src/lib/styles/*.scss dist/styles 2>/dev/null || true; bun sass --style=compressed dist",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-check --tsconfig ./tsconfig.json --watch"
