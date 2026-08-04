@@ -142,7 +142,7 @@ Only fall back to `node:*` APIs when no Bun equivalent exists. Library code unde
 The React source is the spec. When porting a component:
 
 1. Read the RQB source and its tests
-2. Keep prop names, class names, `data-testid`s, and DOM structure identical unless there's a reason  not to
+2. Keep prop names, class names, `data-testid`s, and DOM structure identical unless there's a reason not to
 3. Translate hooks to runes; drop memoization
 4. Port the tests, then the component
 5. Note intentional divergences in a comment and in the changelog
