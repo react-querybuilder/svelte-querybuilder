@@ -48,6 +48,9 @@
     "build:main": "svelte-package -i src/lib -o dist && find dist \\( -name '*.test.*' -o -name '*.test-d.*' -o -name '*.spec.*' \\) -delete",
     "build:css": "mkdir -p dist/styles && cp ../../node_modules/@react-querybuilder/core/dist/*.scss dist && cp ../../node_modules/@react-querybuilder/core/dist/styles/*.scss dist/styles && cp -f src/lib/styles/*.scss dist/styles 2>/dev/null || true; bun sass --style=compressed dist",
     "check": "svelte-check --tsconfig ./tsconfig.json",
+    "conformance": "bun run conformance:fetch && bun run conformance:test",
+    "conformance:fetch": "bun ./scripts/fetch-fixtures.ts",
+    "conformance:test": "vitest run --config vitest.conformance.config.ts",
     "check:watch": "svelte-check --tsconfig ./tsconfig.json --watch"
   },
   "peerDependencies": {

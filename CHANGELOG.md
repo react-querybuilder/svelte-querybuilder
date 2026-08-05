@@ -19,6 +19,7 @@ Initial development. Nothing published yet.
 - `examples/demo` — a Vite + Svelte app aliased to library source, exercising nested groups, independent combinators, every display flag, undo/redo, and live `formatQuery` output in four formats.
 - `examples/sveltekit` — a SvelteKit app that server-renders a nested independent-combinator query and runs `formatQuery` in a server `load`. Its `ssr-smoke-test.ts` boots a preview server and asserts the query builder tree is present in the server response; wired as the repo's `test:ssr` gate in CI.
 - Documentation: `docs/styling.md` (stylesheets, CSS custom properties, class names) and `docs/differences-from-react-querybuilder.md`, plus an expanded `README.md`.
+- Conformance harness (`packages/svelte-querybuilder/test/conformance`, run with `bun run conformance`). Fixtures are downloaded from a pinned `react-querybuilder` release, checksum-verified, and asserted against: 49 full-DOM class-surface cases, 49 accessible-description cases, 58 replayed mutation sequences, and a `formatQuery` → `parseSQL` → `formatQuery` round trip.
 
 ### Changed (divergences from React Query Builder)
 
@@ -36,4 +37,3 @@ Initial development. Nothing published yet.
 ### Not yet implemented
 
 - Snippet props for component customization points (`ruleSnippet`, `valueEditorSnippet`, …). Snippets already work for translatable labels, which accept `Snippet | string`; component replacement goes through `controlElements` for now.
-- The conformance test suite that replays DOM fixtures generated from the React package.
