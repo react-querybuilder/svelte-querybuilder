@@ -14,10 +14,10 @@
   import type { FullField, FullOption, RuleGroupType } from '@react-querybuilder/core';
   import { isRuleGroup, prepareOptionList, rootPath } from '@react-querybuilder/core';
   import { untrack } from 'svelte';
-  import { createQueryBuilderState } from '../reactive/createQueryBuilderState.svelte';
-  import { createRuleGroupParts } from '../reactive/ruleGroupParts.svelte';
-  import type { RuleParts } from '../reactive/ruleParts.svelte';
-  import type { QueryBuilderProps, RuleGroupProps, RuleProps } from '../types/props';
+  import { createQueryBuilderState } from '../reactive/createQueryBuilderState.svelte.js';
+  import { createRuleGroupParts } from '../reactive/ruleGroupParts.svelte.js';
+  import type { RuleParts } from '../reactive/ruleParts.svelte.js';
+  import type { QueryBuilderProps, RuleGroupProps, RuleProps } from '../types/props.js';
   import RuleComponents from './RuleComponents.svelte';
 
   const defaultSubproperties: FullOption[] = [{ name: '', value: '', label: '' }];

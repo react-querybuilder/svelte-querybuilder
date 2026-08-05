@@ -14,8 +14,8 @@ import userEvent from '@testing-library/user-event';
 import type { ComponentProps } from 'svelte';
 import { describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
-import { queries } from '../../../test/conformance/queries';
-import { fields, scenarios } from '../../../test/conformance/scenarios';
+import { queries } from '../../../test/conformance/queries.js';
+import { fields, scenarios } from '../../../test/conformance/scenarios.js';
 import QueryBuilder from './QueryBuilder.svelte';
 
 /**

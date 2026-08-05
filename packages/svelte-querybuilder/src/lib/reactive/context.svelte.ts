@@ -13,10 +13,10 @@ import {
 } from '@react-querybuilder/core';
 import type { Component, Snippet } from 'svelte';
 import { getContext, setContext } from 'svelte';
-import { snippetToComponent } from '../internal/snippetToComponent';
-import type { ControlElementsProp, Controls, ControlSnippets } from '../types/controls';
-import type { QueryBuilderContextProps } from '../types/props';
-import type { Translations, TranslationsFull } from '../types/translations';
+import { snippetToComponent } from '../internal/snippetToComponent.js';
+import type { ControlElementsProp, Controls, ControlSnippets } from '../types/controls.js';
+import type { QueryBuilderContextProps } from '../types/props.js';
+import type { Translations, TranslationsFull } from '../types/translations.js';
 
 /**
  * Module-private context key. Not exported, so the only way in or out is

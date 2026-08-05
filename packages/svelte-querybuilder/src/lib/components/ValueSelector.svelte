@@ -11,7 +11,7 @@
     isOptionGroupArray,
     normalizeValueSelectorValue,
   } from '@react-querybuilder/core';
-  import type { ValueSelectorProps } from '../types/props';
+  import type { ValueSelectorProps } from '../types/props.js';
 
   const {
     testID,

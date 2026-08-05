@@ -6,7 +6,7 @@
 -->
 <script lang="ts">
   import Label from '../internal/Label.svelte';
-  import type { ShiftActionsProps } from '../types/props';
+  import type { ShiftActionsProps } from '../types/props.js';
 
   const {
     testID,

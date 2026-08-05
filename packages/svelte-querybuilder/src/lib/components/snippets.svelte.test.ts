@@ -4,7 +4,7 @@ import { render, screen } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
 import { createRawSnippet } from 'svelte';
 import { describe, expect, it, vi } from 'vitest';
-import type { ActionProps, ValueEditorProps } from '../types/props';
+import type { ActionProps, ValueEditorProps } from '../types/props.js';
 import QueryBuilder from './QueryBuilder.svelte';
 
 const fields = [

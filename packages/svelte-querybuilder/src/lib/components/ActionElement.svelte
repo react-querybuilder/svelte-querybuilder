@@ -6,7 +6,7 @@
 -->
 <script lang="ts">
   import Label from '../internal/Label.svelte';
-  import type { ActionProps } from '../types/props';
+  import type { ActionProps } from '../types/props.js';
 
   const {
     label,

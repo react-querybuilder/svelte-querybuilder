@@ -5,7 +5,7 @@
  * never need a direct core dependency.
  */
 
-export * from './components';
-export * from './reactive';
-export type * from './types';
+export * from './components/index.js';
+export * from './reactive/index.js';
+export type * from './types/index.js';
 export * from '@react-querybuilder/core';

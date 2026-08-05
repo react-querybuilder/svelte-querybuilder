@@ -8,7 +8,7 @@
 -->
 <script lang="ts">
   import { clsx, standardClassnames, TestID } from '@react-querybuilder/core';
-  import type { CombinatorSelectorProps, InlineCombinatorProps } from '../types/props';
+  import type { CombinatorSelectorProps, InlineCombinatorProps } from '../types/props.js';
 
   const { component, ...props }: InlineCombinatorProps = $props();
 

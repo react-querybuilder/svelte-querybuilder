@@ -23,10 +23,10 @@
     RuleGroupTypeAny,
   } from '@react-querybuilder/core';
   import { rootPath } from '@react-querybuilder/core';
-  import { setQueryBuilderContext } from '../reactive/context.svelte';
-  import { createQueryBuilderState } from '../reactive/createQueryBuilderState.svelte';
-  import type { QueryBuilderProps } from '../types/props';
-  import { defaultControlElements } from './defaultControlElements';
+  import { setQueryBuilderContext } from '../reactive/context.svelte.js';
+  import { createQueryBuilderState } from '../reactive/createQueryBuilderState.svelte.js';
+  import type { QueryBuilderProps } from '../types/props.js';
+  import { defaultControlElements } from './defaultControlElements.js';
 
   let { query = $bindable(), ...restProps }: QueryBuilderProps<RG, F, O, C> = $props();
 

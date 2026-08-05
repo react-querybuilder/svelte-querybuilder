@@ -20,9 +20,9 @@ import type {
   ValueEditorType,
   ValueSourceFullOptions,
 } from '@react-querybuilder/core';
-import type { Controls } from './controls';
-import type { QueryBuilderProps } from './props';
-import type { LabelNode } from './translations';
+import type { Controls } from './controls.js';
+import type { QueryBuilderProps } from './props.js';
+import type { LabelNode } from './translations.js';
 
 /**
  * Configuration options passed in the `schema` prop from `QueryBuilder` to each subcomponent.

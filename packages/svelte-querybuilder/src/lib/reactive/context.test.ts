@@ -1,14 +1,14 @@
 import { defaultTranslations, standardClassnames } from '@react-querybuilder/core';
 import type { Snippet } from 'svelte';
 import { describe, expect, it } from 'vitest';
-import { snippetToComponent } from '../internal/snippetToComponent';
+import { snippetToComponent } from '../internal/snippetToComponent.js';
 import {
   getQueryBuilderContext,
   mergeControlElements,
   mergeQueryBuilderConfig,
   mergeTranslations,
   nullComponent,
-} from './context.svelte';
+} from './context.svelte.js';
 
 // Stand-ins for snippets; the merge logic never renders them.
 // oxlint-disable-next-line typescript/no-explicit-any

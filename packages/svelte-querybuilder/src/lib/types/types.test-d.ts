@@ -25,7 +25,7 @@ import type {
   SimpleQueryBuilderPropsIC,
   Translations,
   ValueEditorProps,
-} from './index';
+} from './index.js';
 
 declare function assertType<T>(value: T): void;
 

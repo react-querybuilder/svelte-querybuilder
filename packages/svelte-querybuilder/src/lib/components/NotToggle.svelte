@@ -6,7 +6,7 @@
 -->
 <script lang="ts">
   import Label from '../internal/Label.svelte';
-  import type { NotToggleProps } from '../types/props';
+  import type { NotToggleProps } from '../types/props.js';
 
   const { testID, className, title, label, checked, disabled, handleOnChange }: NotToggleProps =
     $props();

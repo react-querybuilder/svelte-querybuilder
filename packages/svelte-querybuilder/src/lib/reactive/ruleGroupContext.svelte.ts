@@ -7,7 +7,7 @@ import type {
   RuleGroupContext,
   RuleGroupTypeAny,
 } from '@react-querybuilder/core';
-import type { Derived } from './ruleContext.svelte';
+import type { Derived } from './ruleContext.svelte.js';
 
 /**
  * The resolved {@link RuleGroupContext} for the group at `getPath`, recomputed whenever the

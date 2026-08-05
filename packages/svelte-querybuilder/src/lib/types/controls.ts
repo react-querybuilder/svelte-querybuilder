@@ -15,7 +15,7 @@ import type {
   ValueEditorProps,
   ValueSelectorProps,
   ValueSourceSelectorProps,
-} from './props';
+} from './props.js';
 
 /**
  * Subcomponents.

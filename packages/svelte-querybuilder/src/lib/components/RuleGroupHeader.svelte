@@ -7,8 +7,8 @@
 -->
 <script lang="ts">
   import { TestID } from '@react-querybuilder/core';
-  import type { RuleGroupParts } from '../reactive/ruleGroupParts.svelte';
-  import type { RuleGroupProps } from '../types/props';
+  import type { RuleGroupParts } from '../reactive/ruleGroupParts.svelte.js';
+  import type { RuleGroupProps } from '../types/props.js';
 
   const { props, parts }: { props: RuleGroupProps; parts: RuleGroupParts } = $props();
 

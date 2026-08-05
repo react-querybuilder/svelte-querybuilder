@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import * as sqb from './index';
+import * as sqb from './index.js';
 
 describe('svelte-querybuilder barrel', () => {
   it('re-exports the core API', () => {

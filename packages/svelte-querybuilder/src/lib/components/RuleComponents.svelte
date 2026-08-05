@@ -8,9 +8,9 @@
 -->
 <script lang="ts">
   import { TestID } from '@react-querybuilder/core';
-  import type { RuleGroupParts } from '../reactive/ruleGroupParts.svelte';
-  import type { RuleParts } from '../reactive/ruleParts.svelte';
-  import type { RuleGroupProps, RuleProps } from '../types/props';
+  import type { RuleGroupParts } from '../reactive/ruleGroupParts.svelte.js';
+  import type { RuleParts } from '../reactive/ruleParts.svelte.js';
+  import type { RuleGroupProps, RuleProps } from '../types/props.js';
   import RuleGroupBody from './RuleGroupBody.svelte';
   import RuleGroupHeader from './RuleGroupHeader.svelte';
 

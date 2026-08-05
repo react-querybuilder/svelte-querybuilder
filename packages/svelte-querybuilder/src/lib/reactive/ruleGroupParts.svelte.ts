@@ -7,7 +7,7 @@ import {
   getParentPath,
   getValidationClassNames,
 } from '@react-querybuilder/core';
-import type { RuleGroupProps } from '../types/props';
+import type { RuleGroupProps } from '../types/props.js';
 
 // oxlint-disable-next-line typescript/no-explicit-any
 type AnyContext = any;

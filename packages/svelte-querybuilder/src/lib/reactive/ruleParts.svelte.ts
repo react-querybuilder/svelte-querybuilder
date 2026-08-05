@@ -8,8 +8,8 @@ import {
   isPojo,
   lc,
 } from '@react-querybuilder/core';
-import type { RuleProps } from '../types/props';
-import type { LabelNode } from '../types/translations';
+import type { RuleProps } from '../types/props.js';
+import type { LabelNode } from '../types/translations.js';
 
 // oxlint-disable-next-line typescript/no-explicit-any
 type AnyContext = any;

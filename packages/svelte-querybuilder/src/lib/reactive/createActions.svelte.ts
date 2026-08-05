@@ -10,7 +10,7 @@ import type {
   RuleType,
 } from '@react-querybuilder/core';
 import { isRuleGroup } from '@react-querybuilder/core';
-import type { QueryBuilderProps } from '../types/props';
+import type { QueryBuilderProps } from '../types/props.js';
 
 /**
  * The `onAdd*`/`onMove*`/`onGroup*`/`onRemove` props return `false` to cancel an operation, a

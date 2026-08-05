@@ -24,6 +24,13 @@ Initial development. Nothing published yet.
 - `src/lib/internal/Label.svelte`, which renders a `LabelNode` (`Snippet | string`) with no wrapper element and no whitespace. Every label render site goes through it.
 - Accessibility suite (`src/lib/components/a11y.test.ts`): `vitest-axe` over all seven conformance scenarios plus an independent-combinator tree with every control enabled, asserting zero WCAG 2.0/2.1 A and AA violations, and keyboard tests covering tab order through a rule row, `Enter`/`Space` activation, and the not-toggle label association.
 - Conformance harness (`packages/svelte-querybuilder/test/conformance`, run with `bun run conformance`). Fixtures are downloaded from a pinned `react-querybuilder` release, checksum-verified, and asserted against: 49 full-DOM class-surface cases, 49 accessible-description cases, 58 replayed mutation sequences, and a `formatQuery` → `parseSQL` → `formatQuery` round trip.
+- Package-exports gate (`bun run check:exports`, wired into CI). Runs `@arethetypeswrong/cli` against a packed tarball, plus `scripts/check-dist-specifiers.ts`, which asserts every relative specifier in `dist` carries an extension and points at a file that exists. `attw` alone can't cover this: it flags `.svelte` imports in `.d.ts` files as unresolvable (TypeScript has no built-in `.svelte` resolver), so that rule has to be ignored wholesale.
+
+### Fixed
+
+- Relative imports in the published output now carry explicit file extensions, so the package resolves under Node16/NodeNext ESM. `svelte-package` copies specifiers through verbatim, so the extensionless and directory imports in `src/lib` (`./components`, `./reactive`, `./types`, and 50-odd others) reached `dist` unchanged and failed with `ERR_UNSUPPORTED_DIR_IMPORT`. Only bundler-based consumers were unaffected, which is why the test suite and SSR gate never caught it. Note that a `*.svelte.ts` rune module is imported as `*.svelte.js`, distinct from a `*.svelte` component import.
+- The `./dist/*` export wildcard is narrowed to `./dist/*.css` and `./dist/*.scss`. It existed only to serve stylesheets, but exposed every internal module as public API. The documented `svelte-querybuilder/dist/query-builder.css` and `.scss` specifiers are unchanged; deep imports of internal JavaScript are now blocked.
+- `types` is listed first in the `"."` export condition map, ahead of `svelte` and `default`, as TypeScript requires for reliable resolution.
 
 ### Changed (divergences from React Query Builder)
 

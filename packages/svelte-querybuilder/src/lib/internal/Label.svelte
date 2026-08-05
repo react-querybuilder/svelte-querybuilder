@@ -9,7 +9,7 @@
   safe to use inline where the surrounding DOM structure matters.
 -->
 <script lang="ts">
-  import type { LabelNode } from '../types/translations';
+  import type { LabelNode } from '../types/translations.js';
 
   const { label }: { label?: LabelNode | null } = $props();
 </script>

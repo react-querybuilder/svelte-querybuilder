@@ -38,9 +38,9 @@ import type {
   Classnames,
 } from '@react-querybuilder/core';
 import type { Component } from 'svelte';
-import type { ControlElementsProp, ControlSnippets } from './controls';
-import type { Schema } from './schema';
-import type { LabelNode, Translations, TranslationWithLabel } from './translations';
+import type { ControlElementsProp, ControlSnippets } from './controls.js';
+import type { Schema } from './schema.js';
+import type { LabelNode, Translations, TranslationWithLabel } from './translations.js';
 
 /**
  * Base interface for all subcomponents.

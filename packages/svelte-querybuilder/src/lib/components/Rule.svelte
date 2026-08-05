@@ -7,8 +7,8 @@
 -->
 <script lang="ts" generics="F extends string = string, O extends string = string">
   import { TestID } from '@react-querybuilder/core';
-  import { createRuleParts } from '../reactive/ruleParts.svelte';
-  import type { RuleProps } from '../types/props';
+  import { createRuleParts } from '../reactive/ruleParts.svelte.js';
+  import type { RuleProps } from '../types/props.js';
   import RuleComponents from './RuleComponents.svelte';
   import RuleSubQuery from './RuleSubQuery.svelte';
 

@@ -40,13 +40,13 @@ import {
   unchangedSignature,
 } from '@react-querybuilder/core';
 import { untrack } from 'svelte';
-import type { Controls } from '../types/controls';
-import type { QueryBuilderContextProps, QueryBuilderProps } from '../types/props';
-import type { Schema } from '../types/schema';
-import type { LabelNode, TranslationsFull } from '../types/translations';
-import type { MergedQueryBuilderConfig } from './context.svelte';
-import { getQueryBuilderContext, mergeQueryBuilderConfig } from './context.svelte';
-import { createActions } from './createActions.svelte';
+import type { Controls } from '../types/controls.js';
+import type { QueryBuilderContextProps, QueryBuilderProps } from '../types/props.js';
+import type { Schema } from '../types/schema.js';
+import type { LabelNode, TranslationsFull } from '../types/translations.js';
+import type { MergedQueryBuilderConfig } from './context.svelte.js';
+import { getQueryBuilderContext, mergeQueryBuilderConfig } from './context.svelte.js';
+import { createActions } from './createActions.svelte.js';
 
 const emptyValidationMap: ValidationMap = {};
 const emptyDisabledPaths: Path[] = [];

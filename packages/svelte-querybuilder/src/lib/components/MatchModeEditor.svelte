@@ -8,8 +8,8 @@
 <script lang="ts">
   import type { FullField, MatchMode, Path, RuleType } from '@react-querybuilder/core';
   import { lc, parseNumber } from '@react-querybuilder/core';
-  import type { MatchModeEditorProps } from '../types/props';
-  import type { Schema } from '../types/schema';
+  import type { MatchModeEditorProps } from '../types/props.js';
+  import type { Schema } from '../types/schema.js';
 
   const dummyFieldData: FullField = { name: '', value: '', label: '' };
   const dummyPath: Path = [];

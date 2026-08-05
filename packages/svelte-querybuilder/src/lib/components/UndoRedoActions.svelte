@@ -11,7 +11,7 @@
 -->
 <script lang="ts">
   import { TestID } from '@react-querybuilder/core';
-  import type { UndoRedoActionsProps } from '../types/props';
+  import type { UndoRedoActionsProps } from '../types/props.js';
 
   const props: UndoRedoActionsProps = $props();
 

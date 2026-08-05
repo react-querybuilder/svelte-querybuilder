@@ -2,8 +2,8 @@ import type { Field, RuleGroupType } from '@react-querybuilder/core';
 import { QueryManager } from '@react-querybuilder/core';
 import { flushSync } from 'svelte';
 import { describe, expect, it } from 'vitest';
-import { createRuleContext } from './ruleContext.svelte';
-import { createRuleGroupContext } from './ruleGroupContext.svelte';
+import { createRuleContext } from './ruleContext.svelte.js';
+import { createRuleGroupContext } from './ruleGroupContext.svelte.js';
 
 const fields: Field[] = [
   { name: 'f1', label: 'F1', datatype: 'text' },

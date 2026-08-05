@@ -1,7 +1,7 @@
 import { flushSync } from 'svelte';
 import { describe, expect, it, vi } from 'vitest';
-import type { ValueEditorResetDeps } from './valueEditorEffect.svelte';
-import { createValueEditorReset } from './valueEditorEffect.svelte';
+import type { ValueEditorResetDeps } from './valueEditorEffect.svelte.js';
+import { createValueEditorReset } from './valueEditorEffect.svelte.js';
 
 /**
  * Installs the effect over a reactive props object and returns both, plus a flush helper.

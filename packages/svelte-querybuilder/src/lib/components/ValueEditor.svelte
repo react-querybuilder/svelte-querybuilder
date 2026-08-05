@@ -18,8 +18,8 @@
     toArray,
   } from '@react-querybuilder/core';
   import Label from '../internal/Label.svelte';
-  import { createValueEditorReset } from '../reactive/valueEditorEffect.svelte';
-  import type { ValueEditorProps, ValueSelectorProps } from '../types/props';
+  import { createValueEditorReset } from '../reactive/valueEditorEffect.svelte.js';
+  import type { ValueEditorProps, ValueSelectorProps } from '../types/props.js';
 
   const props: ValueEditorProps<FullField, string> = $props();
 

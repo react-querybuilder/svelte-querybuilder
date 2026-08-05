@@ -1,5 +1,5 @@
 import type { FullField } from '@react-querybuilder/core';
-import type { Controls } from '../types/controls';
+import type { Controls } from '../types/controls.js';
 import ActionElement from './ActionElement.svelte';
 import InlineCombinator from './InlineCombinator.svelte';
 import MatchModeEditor from './MatchModeEditor.svelte';

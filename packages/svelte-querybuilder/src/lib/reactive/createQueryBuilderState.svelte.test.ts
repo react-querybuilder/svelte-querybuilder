@@ -2,8 +2,8 @@ import type { Field, RuleGroupType, RuleGroupTypeIC } from '@react-querybuilder/
 import { QueryManager, defaultOperators } from '@react-querybuilder/core';
 import { flushSync } from 'svelte';
 import { describe, expect, it, vi } from 'vitest';
-import type { QueryBuilderProps } from '../types/props';
-import { createQueryBuilderState } from './createQueryBuilderState.svelte';
+import type { QueryBuilderProps } from '../types/props.js';
+import { createQueryBuilderState } from './createQueryBuilderState.svelte.js';
 
 const fields: Field[] = [
   { name: 'firstName', label: 'First Name' },

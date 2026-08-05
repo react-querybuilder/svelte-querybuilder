@@ -1,8 +1,8 @@
 import type { Field, RuleGroupType, RuleType } from '@react-querybuilder/core';
 import { QueryManager } from '@react-querybuilder/core';
 import { describe, expect, it, vi } from 'vitest';
-import type { QueryBuilderProps } from '../types/props';
-import { createActions } from './createActions.svelte';
+import type { QueryBuilderProps } from '../types/props.js';
+import { createActions } from './createActions.svelte.js';
 
 const fields: Field[] = [
   { name: 'f1', label: 'F1' },

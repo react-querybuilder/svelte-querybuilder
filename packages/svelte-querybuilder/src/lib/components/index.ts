@@ -20,4 +20,4 @@ export { default as ShiftActions } from './ShiftActions.svelte';
 export { default as UndoRedoActions } from './UndoRedoActions.svelte';
 export { default as ValueEditor } from './ValueEditor.svelte';
 export { default as ValueSelector } from './ValueSelector.svelte';
-export { defaultControlElements } from './defaultControlElements';
+export { defaultControlElements } from './defaultControlElements.js';
