@@ -1,6 +1,6 @@
 # Styling
 
-The rendered DOM is class-compatible with [React Query Builder](https://react-querybuilder.js.org): same element structure, same class names, same `data-testid` and `data-path` attributes. Existing RQB stylesheets and custom themes work here unchanged.
+The rendered DOM is class-compatible with [React Query Builder](https://react-querybuilder.js.org), so its stylesheets and custom themes work here unchanged.
 
 ## Stylesheets
 
@@ -46,7 +46,7 @@ Most of the visual design is exposed as custom properties on `:root`, so you can
 | `--rqb-branch-width`     | `var(--rqb-border-width)`                | Branch-line width                       |
 | `--rqb-branch-radius`    | `var(--rqb-border-radius)`               | Branch-line corner radius               |
 
-The `--rqb-dnd-*` properties exist in the stylesheet (it is core's, verbatim) but have no effect here — drag-and-drop is a [non-goal](./differences-from-react-querybuilder.md).
+The `--rqb-dnd-*` properties exist in the stylesheet but have no effect here — drag-and-drop is a [non-goal](./differences-from-react-querybuilder.md).
 
 ### Example: a dark, roomier theme
 

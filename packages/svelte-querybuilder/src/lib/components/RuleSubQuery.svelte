@@ -3,10 +3,9 @@
   A rule whose field supports match modes (see `getMatchModes`), i.e. one whose `value` is
   itself a query.
 
-  Port of React Query Builder's `RuleComponentsWithSubQuery`. It exists as a separate component
-  for the same reason it does upstream: the subquery needs its own query-builder state, and that
-  state can only be created during component initialization, so it cannot live behind a
-  conditional inside `Rule`.
+  Port of React Query Builder's `RuleComponentsWithSubQuery`. It is a separate component because
+  the subquery needs its own query-builder state, and that state can only be created during
+  component initialization, so it cannot live behind a conditional inside `Rule`.
 
   The subquery is fully controlled by `rule.value`—every change is written back through
   `onChangeValue`.

@@ -83,7 +83,7 @@ const setManagerQuery = (
 export interface QueryBuilderState<F extends FullField, O extends string> {
   /** The current query. Reassigned whenever the manager notifies. */
   readonly query: RuleGroupTypeAny;
-  /** Alias for {@link QueryBuilderState.query}, matching React Query Builder's naming. */
+  /** Alias for {@link QueryBuilderState.query}. */
   readonly rootGroup: RuleGroupTypeAny;
   readonly manager: QueryManager<RuleGroupTypeAny, F, FullOperator, FullCombinator>;
   readonly schema: Schema<F, O>;
@@ -129,15 +129,13 @@ export interface CreateQueryBuilderStateOptions<F extends FullField, O extends s
  * Must be called during component initialization: it installs `$effect`s for the manager
  * subscription and for controlled-mode synchronization.
  *
- * Divergences from React Query Builder:
+ * The query lives in a {@link QueryManager}. Pass an externally created manager as the
+ * `manager` prop to drive the query from outside the component tree.
  *
- * - The query lives in a {@link QueryManager} instead of a Redux store. Pass an externally
- *   created manager as the `manager` prop to drive the query from outside the component tree;
- *   this replaces `qbId`/`dispatchQuery`.
- * - Structural manager options (`fields`, `operators`, `combinators`, and the boolean flags)
- *   are read once, when the manager is constructed. Function props (`getOperators`,
- *   `getDefaultValue`, etc.) are forwarded through closures, so those stay live. Rendering
- *   always reflects the current props regardless.
+ * Structural manager options (`fields`, `operators`, `combinators`, and the boolean flags) are
+ * read once, when the manager is constructed. Function props (`getOperators`, `getDefaultValue`,
+ * etc.) are forwarded through closures, so those stay live. Rendering always reflects the
+ * current props regardless.
  */
 export const createQueryBuilderState = <
   F extends FullField = FullField,

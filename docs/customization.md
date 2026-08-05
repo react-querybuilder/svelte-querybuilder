@@ -6,11 +6,11 @@ Every part of the rendered tree can be replaced. There are three levels, in orde
 2. **Snippets and `controlElements`** — replace an individual control.
 3. **Context** — apply either of the above to every query builder in a subtree.
 
-The DOM this package renders is class-compatible with React Query Builder, so before replacing a component, check whether [styling](./styling.md) gets you there.
+Before replacing a component, check whether [styling](./styling.md) gets you there.
 
 ## Translations
 
-`translations` overrides the text of every label, title, and placeholder. Labels are typed `LabelNode = Snippet | string`, so anywhere React Query Builder accepts a `ReactNode`, this package accepts a snippet:
+`translations` overrides the text of every label, title, and placeholder. Labels are typed `LabelNode = Snippet | string`, so any label can be either plain text or a snippet:
 
 ```svelte
 <script lang="ts">
@@ -58,7 +58,7 @@ Snippets are the better fit when the replacement is small, needs values from the
 
 ### `controlElements`
 
-Pass a Svelte component instead. This is the React Query Builder-compatible form, and the better fit when the replacement is reusable or needs its own state:
+Pass a Svelte component instead. Better fit when the replacement is reusable or needs its own state:
 
 ```svelte
 <script lang="ts">
@@ -139,9 +139,9 @@ Replacement components receive the same props the default does; the types are ex
   oninput={e => props.handleOnChange(e.currentTarget.value)} />
 ```
 
-Keep `data-testid`, `class`, and `title` if you want to stay compatible with RQB stylesheets and with tests written against the standard DOM.
+Keep `data-testid`, `class`, and `title` if you want the standard stylesheets and any tests written against the standard DOM to keep working.
 
-Replacing `rule` or `ruleGroup` wholesale is a larger job, because those components own the class names, the accessible description, and the child paths. Rather than recomputing any of that, use `createRuleParts`/`createRuleGroupParts` — the Svelte equivalents of React Query Builder's `useRule`/`useRuleGroup`. Both take a props _getter_:
+Replacing `rule` or `ruleGroup` wholesale is a larger job, because those components own the class names, the accessible description, and the child paths. Rather than recomputing any of that, use `createRuleParts`/`createRuleGroupParts`. Both take a props _getter_:
 
 ```svelte
 <script lang="ts">
@@ -158,7 +158,7 @@ Replacing `rule` or `ruleGroup` wholesale is a larger job, because those compone
 
 ## Driving the query from outside
 
-There is no `qbId` and no Redux store. To manipulate the query from outside the component tree, construct a `QueryManager` and pass it in:
+To manipulate the query from outside the component tree, construct a `QueryManager` and pass it in:
 
 ```svelte
 <script lang="ts">

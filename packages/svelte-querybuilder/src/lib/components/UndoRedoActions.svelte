@@ -3,10 +3,8 @@
   Default "undo"/"redo" buttons, rendered in the header of the outermost group when the
   `showUndoRedo` prop is enabled.
 
-  Port of React Query Builder's `UndoRedoActions`. React reads history out of the Redux store
-  via `useQueryBuilderHistory(qbId)`; here the `QueryManager` on `schema` owns it, so there is
-  no separate `react-querybuilder/history` entry point and no opt-in—`QueryManager` is
-  constructed with `history: true`.
+  Port of React Query Builder's `UndoRedoActions`. The `QueryManager` on `schema` owns the
+  history and is always constructed with `history: true`, so there is nothing to opt into.
 
   The buttons themselves are rendered with the `actionElement` control element, so a replacement
   applies here too.

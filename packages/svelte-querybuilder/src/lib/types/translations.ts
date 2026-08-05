@@ -7,9 +7,7 @@ import type {
 import type { Snippet } from 'svelte';
 
 /**
- * Anything that can be rendered as a label. The Svelte analogue of React's `ReactNode`, narrowed
- * to the two forms this package can render: a plain string, or a zero-argument
- * {@link Snippet}.
+ * Anything that can be rendered as a label: a plain string, or a zero-argument {@link Snippet}.
  *
  * @group Props
  */

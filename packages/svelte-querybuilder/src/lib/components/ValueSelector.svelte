@@ -3,8 +3,7 @@
   Default `<select>` component for every selector control (combinator, field, operator, value
   source, and list-based value editors).
 
-  Port of React Query Builder's `ValueSelector`, with `useValueSelector` and
-  `useSelectElementChangeHandler` folded in—neither does anything a `$derived` doesn't.
+  Port of React Query Builder's `ValueSelector`.
 -->
 <script lang="ts">
   import {

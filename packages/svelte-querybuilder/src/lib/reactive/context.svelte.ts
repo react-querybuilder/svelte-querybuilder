@@ -37,9 +37,9 @@ const emptyObject = {} as const;
 export const nullComponent = ((): Record<string, never> => ({})) as unknown as Component<any>;
 
 /**
- * Config inherited through Svelte context. Unlike React Query Builder's context, this carries
- * configuration only—query state lives in the `QueryManager`, so nothing here is stateful and
- * the value can safely be set once during component initialization.
+ * Config inherited through Svelte context. Carries configuration only—query state lives in the
+ * `QueryManager`, so nothing here is stateful and the value can safely be set once during
+ * component initialization.
  *
  * Pass a `$state` object (or an object with getters) if any of the values must stay reactive.
  */
@@ -205,11 +205,8 @@ export interface MergedQueryBuilderConfig<F extends FullField, O extends string>
  * Merges props, inherited context, and package defaults into a single configuration object,
  * with props taking precedence.
  *
- * Deviations from React Query Builder's `useMergedContext`:
- *
- * - `preserveQueryStateOnUnmount` is not supported (there is no store to preserve).
- * - `enableDragAndDrop` is always `false`; drag-and-drop is a non-goal. The flag is retained
- *   only because it feeds the `data-dnd` attribute on the wrapper element.
+ * `enableDragAndDrop` is always `false`; drag-and-drop is a non-goal. The flag is retained only
+ * because it feeds the `data-dnd` attribute on the wrapper element.
  */
 export const mergeQueryBuilderConfig = <F extends FullField, O extends string>({
   props = emptyObject,

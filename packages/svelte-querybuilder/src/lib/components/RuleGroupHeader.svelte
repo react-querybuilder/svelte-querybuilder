@@ -2,10 +2,8 @@
   @component
   The controls in a rule group's header, without the wrapping `<div>`.
 
-  Port of React Query Builder's `RuleGroupHeaderComponents`. Upstream this is reachable through
-  the `ruleGroupHeaderElements` control element; here it is internal, because that control
-  element exists to work around React's context typing and was dropped in the types layer. It is
-  a separate component only so that `Rule` can reuse it for a subquery.
+  Port of React Query Builder's `RuleGroupHeaderComponents`. Internal rather than a control
+  element; it is a separate component only so that `Rule` can reuse it for a subquery.
 -->
 <script lang="ts">
   import { TestID } from '@react-querybuilder/core';

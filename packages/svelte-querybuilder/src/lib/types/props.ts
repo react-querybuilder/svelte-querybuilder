@@ -395,9 +395,9 @@ export interface RuleProps<
 /**
  * Props passed down through context from a query builder context provider.
  *
- * Drag-and-drop is a non-goal for this package, and there is no Redux store, so
  * `enableDragAndDrop` and `preserveQueryStateOnUnmount` are omitted from
- * {@link QueryBuilderFlags}.
+ * {@link QueryBuilderFlags}: drag-and-drop is a non-goal, and there is no store whose state
+ * could be preserved.
  *
  * @group Props
  */
@@ -451,8 +451,6 @@ export type QueryBuilderProps<
        * An externally-created {@link QueryManager} to drive this query builder. When provided,
        * the query builder subscribes to it instead of creating its own manager, which allows
        * the query to be manipulated from outside the component tree.
-       *
-       * Replaces React Query Builder's `qbId`/Redux store approach.
        */
       manager?: QueryManager<RG, F, O, C>;
       /**

@@ -2,7 +2,7 @@
   @component
   Default `notToggle` (aka inversion) component.
 
-  Port of React Query Builder's `NotToggle`. React's `useId` becomes `$props.id()`.
+  Port of React Query Builder's `NotToggle`.
 -->
 <script lang="ts">
   import Label from '../internal/Label.svelte';

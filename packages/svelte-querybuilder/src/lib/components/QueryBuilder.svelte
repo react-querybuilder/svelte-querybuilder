@@ -3,7 +3,7 @@
   The query builder.
 
   Port of React Query Builder's `QueryBuilder`/`QueryBuilderInternal`. All state lives in a
-  `QueryManager` (see `createQueryBuilderState`); there is no Redux store and no `qbId`.
+  `QueryManager` (see `createQueryBuilderState`).
 
   The query can be driven three ways:
 

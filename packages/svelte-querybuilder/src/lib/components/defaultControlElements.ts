@@ -14,9 +14,8 @@ import ValueSelector from './ValueSelector.svelte';
 /**
  * The default component for every control.
  *
- * Divergence from React Query Builder: `undoRedoActions` has a default here. Upstream it is
- * `null` unless the `react-querybuilder/history` entry point is used, because history lives in
- * the Redux store; here `QueryManager` owns it and is always constructed with `history: true`.
+ * `undoRedoActions` has a default because `QueryManager` owns the history and is always
+ * constructed with `history: true`.
  */
 export const defaultControlElements: Controls<FullField, string> = {
   actionElement: ActionElement,

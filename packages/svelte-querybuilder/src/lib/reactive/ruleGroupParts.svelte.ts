@@ -19,10 +19,8 @@ type ActionHandler = (event?: MouseEvent, context?: AnyContext) => void;
  * Everything `RuleGroup`, `RuleGroupHeader`, and `RuleGroupBody` need, derived from
  * {@link RuleGroupProps}.
  *
- * The Svelte equivalent of React Query Builder's `useRuleGroup`, minus the drag-and-drop
- * outputs. Its `useMemo` graph is a dependency list rather than code: the class names and the
- * resolved group configuration come from core, and what remains is a handful of derivations and
- * the event handlers.
+ * The class names and the resolved group configuration come from core; what remains is a
+ * handful of derivations and the event handlers.
  */
 export interface RuleGroupParts {
   /**
@@ -53,8 +51,7 @@ export interface RuleGroupParts {
 }
 
 /**
- * The Svelte equivalent of React Query Builder's `useStopEventPropagation`. Four lines with no
- * reactive content, so it is a plain function rather than a hook.
+ * Wraps an action handler so it stops the triggering event from propagating.
  */
 const stopPropagation =
   (method: ActionHandler): ActionHandler =>
@@ -120,7 +117,7 @@ export const createRuleGroupParts = (getProps: () => RuleGroupProps): RuleGroupP
   );
 
   const accessibleDescription = $derived(
-    // There is no `qbId` in this package; the default generator ignores it.
+    // No `qbId` in this package; the default generator ignores it.
     schema.accessibleDescriptionGenerator({ path, qbId: '' })
   );
 

@@ -22,7 +22,7 @@ export interface Derived<T> {
  * This is the single-call form of the derivation: `QueryManager.getRuleContext` resolves field
  * data, operators, value editor type, value list, value sources, match modes, and the validation
  * result in one pass. Svelte's reactivity is fine-grained enough that decomposing it into
- * granular accessors (as the React `useRule` hook does for memoization) buys nothing.
+ * granular accessors buys nothing.
  *
  * @param getManager - The manager driving the query.
  * @param getPath - The rule's path.

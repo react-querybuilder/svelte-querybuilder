@@ -46,7 +46,7 @@ Four options, in increasing order of control:
 | `query` + `onQueryChange` | Fully controlled, e.g. when the query lives in a store or is validated. |
 | `manager`                 | A `QueryManager` you construct and hold, driven from outside the tree.  |
 
-The `manager` prop replaces React Query Builder's `qbId` registry and `dispatchQuery`. Undo/redo, history, and programmatic mutation all go through the manager.
+Undo/redo, history, and programmatic mutation all go through a `QueryManager`.
 
 ## Styling
 
@@ -79,7 +79,7 @@ Not in v1, and not planned for the near term:
 - `@react-querybuilder/expr` / `@react-querybuilder/datetime` UI integrations
 - Async option lists
 - A Redux store or a `qbId` registry — hold a `QueryManager` instance instead
-- Deprecated-prop fallbacks from the React package
+- Deprecated props carried over from React Query Builder
 
 ## License
 

@@ -2,9 +2,8 @@
   @component
   Default `valueEditor` component.
 
-  Port of React Query Builder's `ValueEditor`. The `useValueEditor` hook is split in two: the
-  reset effect lives in `createValueEditorReset` (the one piece with a timing hazard), and the
-  rest are plain `$derived`s here.
+  Port of React Query Builder's `ValueEditor`. The reset effect lives in
+  `createValueEditorReset` (the one piece with a timing hazard); the rest is derived here.
 -->
 <script lang="ts">
   import type { FullField } from '@react-querybuilder/core';
@@ -75,8 +74,8 @@
   };
 
   /**
-   * The props forwarded to the selector component, mirroring React's `propsForValueSelector`
-   * rest object: everything except the props this component consumes itself.
+   * The props forwarded to the selector component: everything except the props this component
+   * consumes itself.
    */
   const propsForValueSelector = $derived({
     path: props.path,

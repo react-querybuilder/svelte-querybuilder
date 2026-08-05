@@ -2,10 +2,9 @@
   @component
   Default component for `RuleGroupType` and `RuleGroupTypeIC` objects.
 
-  Port of React Query Builder's `RuleGroup`/`useRuleGroup`. The header and body controls live in
-  `RuleGroupHeader.svelte`/`RuleGroupBody.svelte`, which are internal rather than the
-  `ruleGroupHeaderElements`/`ruleGroupBodyElements` control elements upstream; `Rule` reuses them
-  to render a subquery.
+  Port of React Query Builder's `RuleGroup`. The header and body controls live in
+  `RuleGroupHeader.svelte`/`RuleGroupBody.svelte`, which are internal rather than control
+  elements; `Rule` reuses them to render a subquery.
 
   Nested groups and rules are rendered through `schema.controls`, so this component never
   imports itself and replacement components apply at every level.

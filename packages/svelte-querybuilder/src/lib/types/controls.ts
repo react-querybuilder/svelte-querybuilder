@@ -20,9 +20,8 @@ import type {
 /**
  * Subcomponents.
  *
- * Divergences from React Query Builder: no `dragHandle` (drag-and-drop is a non-goal), and no
- * `ruleGroupHeaderElements`/`ruleGroupBodyElements` (they exist upstream to work around React's
- * context typing; use snippets or a replacement `ruleGroup` component instead).
+ * There is no `dragHandle` entry: drag-and-drop is a non-goal. To customize the contents of a
+ * group's header or body, use snippets or a replacement `ruleGroup` component.
  *
  * @group Props
  */
@@ -178,9 +177,8 @@ export type ControlElementsProp<F extends FullField, O extends string> = Partial
  * All subcomponents, finalized: every key is present and non-nullable. `null` entries in
  * {@link ControlElementsProp} are replaced with a component that renders nothing.
  *
- * Unlike React Query Builder, `undoRedoActions` is non-nullable here: this package ships an
- * `UndoRedoActions` implementation backed by `QueryManager`'s history, so no separate entry
- * point is required.
+ * `undoRedoActions` is included: this package ships an `UndoRedoActions` implementation backed
+ * by `QueryManager`'s history.
  *
  * @group Props
  */

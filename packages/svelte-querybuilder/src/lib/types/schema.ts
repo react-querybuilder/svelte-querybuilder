@@ -27,8 +27,8 @@ import type { LabelNode } from './translations';
 /**
  * Configuration options passed in the `schema` prop from `QueryBuilder` to each subcomponent.
  *
- * Divergences from React Query Builder: no `qbId` and no `dispatchQuery` (there is no Redux
- * store); the {@link QueryManager} driving this query builder is exposed as `manager` instead.
+ * The {@link QueryManager} driving this query builder is exposed as `manager`; all query
+ * mutations go through it.
  *
  * @group Props
  */

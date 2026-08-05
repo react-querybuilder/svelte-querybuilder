@@ -20,9 +20,8 @@ type ActionHandler = (event?: MouseEvent, context?: AnyContext) => void;
 /**
  * Everything `Rule` and `RuleComponents` need, derived from {@link RuleProps}.
  *
- * The Svelte equivalent of React Query Builder's `useRule`, minus the drag-and-drop outputs.
- * Its `useMemo` graph is a dependency list rather than code: the class names come from core's
- * `deriveRule*ClassNames`, and the resolved rule configuration from core's `deriveRuleContext`.
+ * Class names come from core's `deriveRule*ClassNames`, and the resolved rule configuration
+ * from core's `deriveRuleContext`.
  */
 export interface RuleParts {
   readonly ctx: ReturnType<typeof deriveRuleContext<FullField>>;
@@ -50,7 +49,7 @@ export interface RuleParts {
   readonly shiftRuleDown: ActionHandler;
 }
 
-/** The Svelte equivalent of React Query Builder's `useStopEventPropagation`. */
+/** Wraps an action handler so it stops the triggering event from propagating. */
 const stopPropagation =
   (method: ActionHandler): ActionHandler =>
   (event, context) => {

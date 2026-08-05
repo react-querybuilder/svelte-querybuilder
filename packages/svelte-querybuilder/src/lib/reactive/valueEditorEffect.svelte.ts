@@ -23,8 +23,7 @@ export interface ValueEditorResetDeps {
  * example when the operator changes from `in` or `between` to `=`, or when an `<input
  * type="number">` is handed a comma-containing string it can't display.
  *
- * The React counterpart is the effect inside `useValueEditor`. Core decides _what_ the value
- * should become (`getValueEditorReset`); this decides _when_.
+ * Core decides _what_ the value should become (`getValueEditorReset`); this decides _when_.
  *
  * Three rules keep this from looping (`effect_update_depth_exceeded`):
  *

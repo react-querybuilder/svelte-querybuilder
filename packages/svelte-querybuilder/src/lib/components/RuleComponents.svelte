@@ -4,7 +4,7 @@
 
   Port of React Query Builder's `RuleComponents`. When `subQuery`/`subQueryProps` are supplied
   (by `RuleSubQuery.svelte`), the subquery's group header and body are rendered in `<div>`s
-  around the rule's own action buttons, matching React's `RuleWithSubQueryGroupComponentsWrapper`.
+  around the rule's own action buttons.
 -->
 <script lang="ts">
   import { TestID } from '@react-querybuilder/core';
