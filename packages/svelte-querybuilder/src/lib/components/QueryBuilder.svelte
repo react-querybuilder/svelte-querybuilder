@@ -12,15 +12,23 @@
   - `defaultQuery` — uncontrolled.
   - a `manager` prop — driven from outside the component tree entirely.
 -->
-<script lang="ts">
+<script
+  lang="ts"
+  generics="RG extends RuleGroupTypeAny = RuleGroupType, F extends FullField = FullField, O extends FullOperator = FullOperator, C extends FullCombinator = FullCombinator">
+  import type {
+    FullCombinator,
+    FullField,
+    FullOperator,
+    RuleGroupType,
+    RuleGroupTypeAny,
+  } from '@react-querybuilder/core';
   import { rootPath } from '@react-querybuilder/core';
   import { setQueryBuilderContext } from '../reactive/context.svelte';
   import { createQueryBuilderState } from '../reactive/createQueryBuilderState.svelte';
   import type { QueryBuilderProps } from '../types/props';
   import { defaultControlElements } from './defaultControlElements';
 
-  // oxlint-disable-next-line typescript/no-explicit-any
-  let { query = $bindable(), ...restProps }: QueryBuilderProps<any> = $props();
+  let { query = $bindable(), ...restProps }: QueryBuilderProps<RG, F, O, C> = $props();
 
   const getProps = () => ({ ...restProps, query }) as QueryBuilderProps;
 

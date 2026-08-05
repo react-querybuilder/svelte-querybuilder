@@ -5,14 +5,14 @@
   Port of React Query Builder's `Rule`. A thin wrapper around `RuleComponents.svelte`, or around
   `RuleSubQuery.svelte` when the rule's field supports match modes.
 -->
-<script lang="ts">
+<script lang="ts" generics="F extends string = string, O extends string = string">
   import { TestID } from '@react-querybuilder/core';
   import { createRuleParts } from '../reactive/ruleParts.svelte';
   import type { RuleProps } from '../types/props';
   import RuleComponents from './RuleComponents.svelte';
   import RuleSubQuery from './RuleSubQuery.svelte';
 
-  const props: RuleProps = $props();
+  const props: RuleProps<F, O> = $props();
 
   const parts = createRuleParts(() => props);
 </script>

@@ -5,6 +5,7 @@
   Port of React Query Builder's `NotToggle`. React's `useId` becomes `$props.id()`.
 -->
 <script lang="ts">
+  import Label from '../internal/Label.svelte';
   import type { NotToggleProps } from '../types/props';
 
   const { testID, className, title, label, checked, disabled, handleOnChange }: NotToggleProps =
@@ -19,4 +20,4 @@
     type="checkbox"
     onchange={e => handleOnChange(e.currentTarget.checked)}
     checked={!!checked}
-    {disabled} />{#if typeof label === 'string'}{label}{:else if label}{@render label()}{/if}</label>
+    {disabled} /><Label {label} /></label>

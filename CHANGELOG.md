@@ -19,6 +19,10 @@ Initial development. Nothing published yet.
 - `examples/demo` — a Vite + Svelte app aliased to library source, exercising nested groups, independent combinators, every display flag, undo/redo, and live `formatQuery` output in four formats.
 - `examples/sveltekit` — a SvelteKit app that server-renders a nested independent-combinator query and runs `formatQuery` in a server `load`. Its `ssr-smoke-test.ts` boots a preview server and asserts the query builder tree is present in the server response; wired as the repo's `test:ssr` gate in CI.
 - Documentation: `docs/styling.md` (stylesheets, CSS custom properties, class names) and `docs/differences-from-react-querybuilder.md`, plus an expanded `README.md`.
+- Snippet props for every component customization point: for each key `x` of `controlElements` there is an `xSnippet` prop taking `Snippet<[props]>`, including the `actionElementSnippet`/`valueSelectorSnippet` bulk overrides. Snippets take precedence over the `controlElements` entry at the same level; the full order is keyed snippet, keyed component, bulk snippet, bulk component, tried across props, then context, then defaults. Adapted to the `Controls` shape by `snippetToComponent`, which caches by snippet identity so a config change never remounts the tree.
+- `ControlSnippets` type, and the convenience aliases `SimpleQueryBuilderProps`, `SimpleQueryBuilderPropsIC`, `SimpleRuleProps`, and `SimpleRuleGroupProps`. `QueryBuilder`, `RuleGroup`, and `Rule` are now generic components (`generics=`), so `bind:query` infers `RuleGroupType` vs `RuleGroupTypeIC` from the query.
+- `src/lib/internal/Label.svelte`, which renders a `LabelNode` (`Snippet | string`) with no wrapper element and no whitespace. Every label render site goes through it.
+- Accessibility suite (`src/lib/components/a11y.test.ts`): `vitest-axe` over all seven conformance scenarios plus an independent-combinator tree with every control enabled, asserting zero WCAG 2.0/2.1 A and AA violations, and keyboard tests covering tab order through a rule row, `Enter`/`Space` activation, and the not-toggle label association.
 - Conformance harness (`packages/svelte-querybuilder/test/conformance`, run with `bun run conformance`). Fixtures are downloaded from a pinned `react-querybuilder` release, checksum-verified, and asserted against: 49 full-DOM class-surface cases, 49 accessible-description cases, 58 replayed mutation sequences, and a `formatQuery` → `parseSQL` → `formatQuery` round trip.
 
 ### Changed (divergences from React Query Builder)
@@ -34,6 +38,8 @@ Initial development. Nothing published yet.
 - `Rule` resolves its configuration with core's `deriveRuleContext` over `schema`, rather than `QueryManager.getRuleContext(path)`, so a replacement `rule` component can render a rule that is not in the manager's query.
 - No drag handle and no `data-dragmonitorid`/`data-dropmonitorid` attributes; drag-and-drop is a non-goal.
 
-### Not yet implemented
+- `docs/customization.md` — translations, snippets, `controlElements`, resolution order, context, replacement components, and external control via `QueryManager`.
 
-- Snippet props for component customization points (`ruleSnippet`, `valueEditorSnippet`, …). Snippets already work for translatable labels, which accept `Snippet | string`; component replacement goes through `controlElements` for now.
+### Known limitations
+
+- Axe's best-practice rule `label-title-only` fires on every selector and text editor: React Query Builder labels them with `title` alone, and full DOM parity is a locked decision for this port. It is not a WCAG failure (`title` does produce an accessible name), and the a11y suite asserts it is the _only_ best-practice violation, so any other regression still fails. Supply a labeled control through `controlElements` or a snippet if you need a visible label.

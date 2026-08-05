@@ -76,7 +76,17 @@ Snippets are accepted for translatable labels anywhere React accepts a `ReactNod
 <QueryBuilder {fields} bind:query translations={{ addRule: { label: addRuleLabel } }} />
 ```
 
-> **Planned:** snippet props for each _component_ customization point (`ruleSnippet`, `valueEditorSnippet`, …), which will take precedence over the corresponding `controlElements` entry. Not implemented yet; use `controlElements` for now.
+Every control element also has a snippet prop — `valueEditorSnippet`, `ruleSnippet`, `actionElementSnippet`, and so on — which takes precedence over the corresponding `controlElements` entry:
+
+```svelte
+{#snippet valueEditorSnippet(props)}
+  <MyInput value={props.value} oninput={e => props.handleOnChange(e.currentTarget.value)} />
+{/snippet}
+
+<QueryBuilder {fields} bind:query {valueEditorSnippet} />
+```
+
+React has no equivalent; `controlElements` is its only component-level customization point. See [customization.md](./customization.md) for the full resolution order.
 
 ## Type-level differences
 
@@ -86,6 +96,7 @@ Snippets are accepted for translatable labels anywhere React accepts a `ReactNod
 - `QueryBuilderProps` has defaults for all four type parameters (`RuleGroupType`, `FullField`, `FullOperator`, `FullCombinator`), so bare `QueryBuilderProps` is valid. React requires all four.
 - `ActionProps.handleOnClick` and `ShiftActionsProps.shiftUp`/`shiftDown` take a DOM `MouseEvent`, not React's synthetic `MouseEvent`.
 - `Controls['undoRedoActions']` is non-nullable. React keeps it nullable because no implementation ships in the base package.
+- `ControlSnippets` has no React counterpart: for every key `x` of `ControlElementsProp` there is an `xSnippet` prop taking `Snippet<[props]>`.
 
 ## Reactivity
 

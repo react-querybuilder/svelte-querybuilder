@@ -10,14 +10,15 @@
   Nested groups and rules are rendered through `schema.controls`, so this component never
   imports itself and replacement components apply at every level.
 -->
-<script lang="ts">
+<script lang="ts" generics="F extends FullOption = FullOption, O extends string = string">
+  import type { FullOption } from '@react-querybuilder/core';
   import { TestID } from '@react-querybuilder/core';
   import { createRuleGroupParts } from '../reactive/ruleGroupParts.svelte';
   import type { RuleGroupProps } from '../types/props';
   import RuleGroupBody from './RuleGroupBody.svelte';
   import RuleGroupHeader from './RuleGroupHeader.svelte';
 
-  const props: RuleGroupProps = $props();
+  const props: RuleGroupProps<F, O> = $props();
 
   const parts = createRuleGroupParts(() => props);
 </script>

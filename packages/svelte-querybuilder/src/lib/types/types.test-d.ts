@@ -11,14 +11,18 @@ import type {
   RuleGroupTypeAny,
   RuleGroupTypeIC,
 } from '@react-querybuilder/core';
+import type { Snippet } from 'svelte';
 import type {
   ActionProps,
   Controls,
   ControlElementsProp,
+  ControlSnippets,
   QueryBuilderProps,
   RuleGroupProps,
   RuleProps,
   Schema,
+  SimpleQueryBuilderProps,
+  SimpleQueryBuilderPropsIC,
   Translations,
   ValueEditorProps,
 } from './index';
@@ -97,4 +101,21 @@ declare const actionProps: ActionProps;
 assertType<string | undefined>(actionProps.label as string | undefined);
 declare const valueEditorProps: ValueEditorProps;
 assertType<Schema<FullField, string>>(valueEditorProps.schema);
+// #endregion
+
+// #region Snippet props
+declare const snippets: ControlSnippets<FullField, string>;
+assertType<Snippet<[ValueEditorProps<FullField, string>]> | undefined>(snippets.valueEditorSnippet);
+assertType<Snippet<[ActionProps]> | undefined>(snippets.actionElementSnippet);
+// @ts-expect-error there is no `dragHandle` control, so there is no snippet for it either
+assertType<unknown>(snippets.dragHandleSnippet);
+// Snippet props are part of `QueryBuilderProps` and inheritable through context.
+assertType<Snippet<[RuleProps]> | undefined>(stdProps.ruleSnippet);
+// #endregion
+
+// #region Convenience aliases
+assertType<SimpleQueryBuilderProps>(stdProps);
+assertType<SimpleQueryBuilderPropsIC>(icProps);
+// @ts-expect-error the aliases are not interchangeable
+assertType<SimpleQueryBuilderPropsIC>(stdProps);
 // #endregion

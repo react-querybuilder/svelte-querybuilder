@@ -18,6 +18,7 @@
     parseNumber,
     toArray,
   } from '@react-querybuilder/core';
+  import Label from '../internal/Label.svelte';
   import { createValueEditorReset } from '../reactive/valueEditorEffect.svelte';
   import type { ValueEditorProps, ValueSelectorProps } from '../types/props';
 
@@ -95,7 +96,7 @@
   );
 </script>
 
-{#snippet separator()}{#if typeof props.separator === 'string'}{props.separator}{:else if props.separator}{@render props.separator()}{/if}{/snippet}
+{#snippet separator()}<Label label={props.separator} />{/snippet}
 
 {#if props.operator === 'null' || props.operator === 'notNull'}
   <!-- No value editor for unary operators. -->

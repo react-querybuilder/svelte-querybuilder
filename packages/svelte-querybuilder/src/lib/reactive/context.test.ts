@@ -1,5 +1,7 @@
 import { defaultTranslations, standardClassnames } from '@react-querybuilder/core';
+import type { Snippet } from 'svelte';
 import { describe, expect, it } from 'vitest';
+import { snippetToComponent } from '../internal/snippetToComponent';
 import {
   getQueryBuilderContext,
   mergeControlElements,
@@ -7,6 +9,12 @@ import {
   mergeTranslations,
   nullComponent,
 } from './context.svelte';
+
+// Stand-ins for snippets; the merge logic never renders them.
+// oxlint-disable-next-line typescript/no-explicit-any
+const snippetA = (() => {}) as unknown as Snippet<[any]>;
+// oxlint-disable-next-line typescript/no-explicit-any
+const snippetB = (() => {}) as unknown as Snippet<[any]>;
 
 // Stand-ins for components; the merge logic never renders them.
 const A = (() => ({})) as never;
@@ -56,6 +64,64 @@ describe('mergeControlElements', () => {
     const controls = mergeControlElements({ addRuleAction: A }, { actionElement: B }, {});
     expect(controls.addRuleAction).toBe(A);
     expect(controls.addGroupAction).toBe(B);
+  });
+
+  it('prefers a snippet over a component at the same level', () => {
+    const controls = mergeControlElements(
+      { notToggle: A },
+      {},
+      { notToggle: C },
+      { notToggleSnippet: snippetA }
+    );
+    expect(controls.notToggle).toBe(snippetToComponent(snippetA));
+  });
+
+  it('prefers a component from props over a snippet from context', () => {
+    const controls = mergeControlElements(
+      { notToggle: A },
+      {},
+      {},
+      {},
+      { notToggleSnippet: snippetA }
+    );
+    expect(controls.notToggle).toBe(A);
+  });
+
+  it('prefers a snippet from context over a default', () => {
+    const controls = mergeControlElements(
+      {},
+      {},
+      { notToggle: C },
+      {},
+      { notToggleSnippet: snippetA }
+    );
+    expect(controls.notToggle).toBe(snippetToComponent(snippetA));
+  });
+
+  it('honors a null component even when a snippet is inherited', () => {
+    const controls = mergeControlElements(
+      { notToggle: null },
+      {},
+      {},
+      {},
+      { notToggleSnippet: snippetA }
+    );
+    expect(controls.notToggle).toBe(nullComponent);
+  });
+
+  it('applies actionElementSnippet and valueSelectorSnippet as bulk overrides', () => {
+    const controls = mergeControlElements(
+      { addRuleAction: A },
+      {},
+      { valueEditor: C },
+      { actionElementSnippet: snippetA, valueSelectorSnippet: snippetB }
+    );
+    // A keyed component beats a bulk snippet at the same level.
+    expect(controls.addRuleAction).toBe(A);
+    expect(controls.addGroupAction).toBe(snippetToComponent(snippetA));
+    expect(controls.fieldSelector).toBe(snippetToComponent(snippetB));
+    // Bulk overrides never apply to these.
+    expect(controls.valueEditor).toBe(C);
   });
 
   it('omits keys with no resolution', () => {

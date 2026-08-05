@@ -38,7 +38,7 @@ import type {
   Classnames,
 } from '@react-querybuilder/core';
 import type { Component } from 'svelte';
-import type { ControlElementsProp } from './controls';
+import type { ControlElementsProp, ControlSnippets } from './controls';
 import type { Schema } from './schema';
 import type { LabelNode, Translations, TranslationWithLabel } from './translations';
 
@@ -404,7 +404,10 @@ export interface RuleProps<
 export interface QueryBuilderContextProps<
   F extends FullField = FullField,
   O extends string = string,
-> extends Omit<QueryBuilderFlags, 'enableDragAndDrop' | 'preserveQueryStateOnUnmount'> {
+>
+  extends
+    Omit<QueryBuilderFlags, 'enableDragAndDrop' | 'preserveQueryStateOnUnmount'>,
+    ControlSnippets<F, O> {
   /**
    * Defines replacement components.
    */
@@ -722,3 +725,35 @@ export type QueryBuilderProps<
       context?: any;
     }
   : never;
+
+/**
+ * {@link QueryBuilderProps} for the common case: a standard {@link RuleGroupType} query with the
+ * default field, operator, and combinator types.
+ *
+ * `QueryBuilder` is generic in all four type parameters, but they all have defaults, so this is
+ * only a convenience name for the fully-defaulted form.
+ *
+ * @group Props
+ */
+export type SimpleQueryBuilderProps = QueryBuilderProps<RuleGroupType>;
+
+/**
+ * {@link QueryBuilderProps} for a query with independent combinators.
+ *
+ * @group Props
+ */
+export type SimpleQueryBuilderPropsIC = QueryBuilderProps<RuleGroupTypeIC>;
+
+/**
+ * {@link RuleProps} with the default type parameters.
+ *
+ * @group Props
+ */
+export type SimpleRuleProps = RuleProps;
+
+/**
+ * {@link RuleGroupProps} with the default type parameters.
+ *
+ * @group Props
+ */
+export type SimpleRuleGroupProps = RuleGroupProps;

@@ -11,9 +11,10 @@ import {
   preferFlagProps,
   preferProp,
 } from '@react-querybuilder/core';
-import type { Component } from 'svelte';
+import type { Component, Snippet } from 'svelte';
 import { getContext, setContext } from 'svelte';
-import type { ControlElementsProp, Controls } from '../types/controls';
+import { snippetToComponent } from '../internal/snippetToComponent';
+import type { ControlElementsProp, Controls, ControlSnippets } from '../types/controls';
 import type { QueryBuilderContextProps } from '../types/props';
 import type { Translations, TranslationsFull } from '../types/translations';
 
@@ -103,38 +104,72 @@ const controlKeys = [
 ] as const satisfies readonly (keyof Controls<FullField, string>)[];
 
 /**
- * Merges `controlElements` from props, context, and defaults, giving precedence to props.
+ * The wrapped component for a named snippet prop, or `undefined` if that prop is absent.
+ */
+const snippetFor = <F extends FullField, O extends string>(
+  source: ControlSnippets<F, O>,
+  snippetKey: string
+  // oxlint-disable-next-line typescript/no-explicit-any
+): Component<any> | undefined => {
+  const snippet = (source as Record<string, Snippet<[never]> | undefined>)[snippetKey];
+  return snippet ? snippetToComponent(snippet as Snippet<[Record<string, unknown>]>) : undefined;
+};
+
+/**
+ * Merges `controlElements` and snippet props from props, context, and defaults, giving
+ * precedence to props.
  *
  * Mirrors `useMergedContext`: a `null` entry resolves to {@link nullComponent} (rendering
  * nothing), `actionElement` is a bulk override for every `*Action`/`*Actions` key, and
  * `valueSelector` is a bulk override for every `*Selector` key. Bulk overrides never apply to
  * `valueEditor`, `rule`, `ruleGroup`, `inlineCombinator`, `notToggle`, or `matchModeEditor`.
+ *
+ * Snippets are the Svelte-native customization point and are resolved first. Within a level the
+ * order is: keyed snippet, keyed component, bulk snippet, bulk component. Levels are then tried
+ * in order—props, context, defaults—so a snippet passed to `QueryBuilder` beats a component
+ * inherited from context, and vice versa.
  */
 export const mergeControlElements = <F extends FullField, O extends string>(
   propsCE: ControlElementsProp<F, O> = emptyObject,
   contextCE: ControlElementsProp<F, O> = emptyObject,
-  defaults: Partial<Controls<F, O>> = emptyObject
+  defaults: Partial<Controls<F, O>> = emptyObject,
+  propsSnippets: ControlSnippets<F, O> = emptyObject,
+  contextSnippets: ControlSnippets<F, O> = emptyObject
 ): Controls<F, O> => {
   const merged: Record<string, unknown> = {};
 
   for (const key of controlKeys) {
-    const bulk = (
-      source: ControlElementsProp<F, O>
+    /**
+     * Resolves one level (props or context) to a component, `nullComponent`, or `undefined`
+     * meaning "fall through to the next level".
+     */
+    const resolveLevel = (
+      ce: ControlElementsProp<F, O>,
+      sn: ControlSnippets<F, O>
       // oxlint-disable-next-line typescript/no-explicit-any
-    ): Component<any> | undefined =>
-      (isActionKey(key) ? source.actionElement : undefined) ??
-      (isSelectorKey(key) ? source.valueSelector : undefined);
+    ): Component<any> | undefined => {
+      const keyed = snippetFor(sn, `${key}Snippet`);
+      if (keyed) return keyed;
 
-    const propComp = propsCE[key];
-    const contextComp = contextCE[key];
+      const comp = ce[key];
+      if (comp === null) return nullComponent;
+      if (comp) return comp;
+
+      const bulkSnippet =
+        (isActionKey(key) ? snippetFor(sn, 'actionElementSnippet') : undefined) ??
+        (isSelectorKey(key) ? snippetFor(sn, 'valueSelectorSnippet') : undefined);
+      if (bulkSnippet) return bulkSnippet;
+
+      return (
+        (isActionKey(key) ? ce.actionElement : undefined) ??
+        (isSelectorKey(key) ? ce.valueSelector : undefined)
+      );
+    };
 
     const comp =
-      propComp === null
-        ? nullComponent
-        : (propComp ??
-          bulk(propsCE) ??
-          (contextComp === null ? nullComponent : (contextComp ?? bulk(contextCE))) ??
-          defaults[key]);
+      resolveLevel(propsCE, propsSnippets) ??
+      resolveLevel(contextCE, contextSnippets) ??
+      defaults[key];
 
     if (comp) merged[key] = comp;
   }
@@ -196,7 +231,9 @@ export const mergeQueryBuilderConfig = <F extends FullField, O extends string>({
     controls: mergeControlElements(
       props.controlElements,
       context?.controlElements,
-      defaultControls
+      defaultControls,
+      props,
+      context
     ),
     translations: mergeTranslations(props.translations, context?.translations),
   };

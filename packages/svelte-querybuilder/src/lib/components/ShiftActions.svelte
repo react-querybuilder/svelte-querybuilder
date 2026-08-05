@@ -5,6 +5,7 @@
   Port of React Query Builder's `ShiftActions`.
 -->
 <script lang="ts">
+  import Label from '../internal/Label.svelte';
   import type { ShiftActionsProps } from '../types/props';
 
   const {
@@ -25,12 +26,10 @@
     type="button"
     disabled={disabled || shiftUpDisabled}
     onclick={e => shiftUp?.(e)}
-    title={titles?.shiftUp}
-    >{#if typeof labels?.shiftUp === 'string'}{labels.shiftUp}{:else if labels?.shiftUp}{@render labels.shiftUp()}{/if}</button>
+    title={titles?.shiftUp}><Label label={labels?.shiftUp} /></button>
   <button
     type="button"
     disabled={disabled || shiftDownDisabled}
     onclick={e => shiftDown?.(e)}
-    title={titles?.shiftDown}
-    >{#if typeof labels?.shiftDown === 'string'}{labels.shiftDown}{:else if labels?.shiftDown}{@render labels.shiftDown()}{/if}</button>
+    title={titles?.shiftDown}><Label label={labels?.shiftDown} /></button>
 </div>

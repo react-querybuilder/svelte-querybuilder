@@ -61,6 +61,7 @@ The DOM is class-compatible with React Query Builder, so existing RQB stylesheet
 ## Docs
 
 - [Differences from React Query Builder](./docs/differences-from-react-querybuilder.md)
+- [Customization](./docs/customization.md)
 - [Styling](./docs/styling.md)
 - Concepts, field/operator configuration, query formats, and parsers: the [React Query Builder documentation](https://react-querybuilder.js.org/docs/intro) applies directly, since the logic layer is shared.
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { QueryBuilder } from 'svelte-querybuilder';
+  import { QueryBuilder, type ActionProps } from 'svelte-querybuilder';
   import { fields, query as initialQuery } from '$lib/query';
   import type { PageData } from './$types';
 
@@ -15,7 +15,24 @@
   client.
 </p>
 
-<QueryBuilder {fields} bind:query showNotToggle showCloneButtons showLockButtons showShiftActions />
+<!-- A snippet control element: takes precedence over `controlElements.addRuleAction`. -->
+{#snippet addRuleActionSnippet(props: ActionProps)}
+  <button
+    type="button"
+    data-testid={props.testID}
+    class={props.className}
+    title={props.title}
+    onclick={props.handleOnClick}>＋ {props.label}</button>
+{/snippet}
+
+<QueryBuilder
+  {fields}
+  bind:query
+  {addRuleActionSnippet}
+  showNotToggle
+  showCloneButtons
+  showLockButtons
+  showShiftActions />
 
 <h2>formatQuery, on the server</h2>
 <pre data-testid="server-sql">{data.sql}</pre>

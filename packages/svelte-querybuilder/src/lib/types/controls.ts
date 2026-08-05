@@ -1,5 +1,5 @@
 import type { FullField } from '@react-querybuilder/core';
-import type { Component } from 'svelte';
+import type { Component, ComponentProps, Snippet } from 'svelte';
 import type {
   ActionProps,
   CombinatorSelectorProps,
@@ -189,3 +189,20 @@ export type Controls<F extends FullField, O extends string> = {
     Required<ControlElementsProp<F, O>>[K]
   >;
 };
+
+/**
+ * Snippet-based alternatives to {@link ControlElementsProp}.
+ *
+ * Every control element key `x` has a matching `xSnippet` prop taking a single argument: the
+ * same props object the corresponding component would have received. Snippets take precedence
+ * over `controlElements` at the same level (see `mergeControlElements`), so
+ * `valueEditorSnippet` wins over `controlElements.valueEditor`.
+ *
+ * There is no `null` form—omit the snippet to fall through to the next source, or pass
+ * `controlElements: { x: null }` to render nothing.
+ *
+ * @group Props
+ */
+export type ControlSnippets<F extends FullField, O extends string> = Partial<{
+  [K in keyof Controls<F, O> as `${K}Snippet`]: Snippet<[ComponentProps<Controls<F, O>[K]>]>;
+}>;

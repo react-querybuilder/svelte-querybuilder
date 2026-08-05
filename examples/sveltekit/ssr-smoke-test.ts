@@ -57,6 +57,9 @@ try {
     ['`data-testid="rule"` present', html.includes('data-testid="rule"')],
     ['`data-testid="rule-group"` present', html.includes('data-testid="rule-group"')],
     ['inline combinator rendered', html.includes('data-testid="inline-combinator"')],
+    // `snippetToComponent` forwards to a component function, which Svelte calls as
+    // `(payload, props)` on the server; nothing else in the suite exercises that path.
+    ['snippet control element server-rendered', html.includes('＋ + Rule')],
     ['server-side formatQuery output', html.includes("firstName like 'Stev%'")],
   ];
 
