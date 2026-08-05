@@ -54,7 +54,7 @@
     "svelte": "^5.25"
   },
   "dependencies": {
-    "@react-querybuilder/core": "^8.22"
+    "@react-querybuilder/core": "^8.22.2"
   },
   "devDependencies": {
     "@sveltejs/package": "^2.5.8",
