@@ -84,9 +84,8 @@ Snippets are accepted for translatable labels anywhere React accepts a `ReactNod
 - `ComponentType<P>` → Svelte's `Component<P>`.
 - `Schema` drops `dispatchQuery` and `qbId`, and gains `manager: QueryManager`.
 - `QueryBuilderProps` has defaults for all four type parameters (`RuleGroupType`, `FullField`, `FullOperator`, `FullCombinator`), so bare `QueryBuilderProps` is valid. React requires all four.
-- `ActionProps.handleOnClick` takes a DOM `MouseEvent`, not React's synthetic `MouseEvent`.
+- `ActionProps.handleOnClick` and `ShiftActionsProps.shiftUp`/`shiftDown` take a DOM `MouseEvent`, not React's synthetic `MouseEvent`.
 - `Controls['undoRedoActions']` is non-nullable. React keeps it nullable because no implementation ships in the base package.
-- `ShiftActionsProps.shiftUp`/`shiftDown` are typed `(event?: MouseEvent) => void`. React types them `() => void` but wires them directly to `onClick` and then reads `event.altKey`, so the upstream type is simply wrong.
 
 ## Reactivity
 
