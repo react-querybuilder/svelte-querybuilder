@@ -1,0 +1,14 @@
+{
+  // Extends the SvelteKit-generated config (run `svelte-kit sync` first), not
+  // `tsconfig.base.json` -- Kit owns path aliases, `rootDirs`, and module resolution here.
+  "extends": "./.svelte-kit/tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "verbatimModuleSyntax": true,
+    // Matches the `create-svelte` template default. Required here because
+    // `@react-querybuilder/core`'s declarations carry type-only imports of its optional
+    // integrations (`json-logic-js`, `drizzle-orm`, `sequelize`, `@tanstack/db`), none of which
+    // are installed. Kit's generated tsconfig does not set this.
+    "skipLibCheck": true
+  }
+}

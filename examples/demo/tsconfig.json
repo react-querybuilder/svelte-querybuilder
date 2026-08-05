@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["esnext", "dom", "dom.iterable"],
+    "paths": {
+      "svelte-querybuilder": ["../../packages/svelte-querybuilder/src/lib/index.ts"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.svelte", "*.ts"],
+  "exclude": ["node_modules", "dist"]
+}
