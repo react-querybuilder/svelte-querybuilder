@@ -29,6 +29,7 @@
     "*.scss"
   ],
   "files": [
+    "README.md",
     "dist",
     "!dist/**/*.test.*",
     "!dist/**/*.test-d.*",
@@ -45,6 +46,8 @@
     "./package.json": "./package.json"
   },
   "scripts": {
+    "prepack": "bun run ./scripts/copy-readme.ts",
+    "postpack": "rm -f README.md",
     "build": "bun run build:main && bun run build:css",
     "build:main": "svelte-package -i src/lib -o dist && find dist \\( -name '*.test.*' -o -name '*.test-d.*' -o -name '*.spec.*' \\) -delete",
     "build:css": "mkdir -p dist/styles && cp ../../node_modules/@react-querybuilder/core/dist/*.scss dist && cp ../../node_modules/@react-querybuilder/core/dist/styles/*.scss dist/styles && cp -f src/lib/styles/*.scss dist/styles 2>/dev/null || true; bun sass --style=compressed dist",
