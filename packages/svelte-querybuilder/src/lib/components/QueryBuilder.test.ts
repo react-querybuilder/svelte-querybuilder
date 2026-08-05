@@ -306,7 +306,7 @@ describe('QueryBuilder', () => {
     expect(manager.getQuery().rules).toHaveLength(2);
   });
 
-  it('renders independent combinators without a combinator selector', () => {
+  it('renders independent combinators inline rather than in the group header', () => {
     render(QueryBuilder, {
       props: {
         fields,
@@ -320,7 +320,12 @@ describe('QueryBuilder', () => {
       },
     });
 
-    expect(screen.queryByTestId(TestID.combinators)).toBeNull();
+    // One inline combinator between the two rules, and none in the group header.
+    expect(screen.getAllByTestId(TestID.inlineCombinator)).toHaveLength(1);
+    expect(screen.getAllByTestId(TestID.combinators)).toHaveLength(1);
+    expect(screen.getByTestId(TestID.inlineCombinator)).toContainElement(
+      screen.getByTestId(TestID.combinators)
+    );
     expect(screen.getAllByTestId(TestID.rule)).toHaveLength(2);
   });
 
@@ -330,5 +335,79 @@ describe('QueryBuilder', () => {
     });
 
     expect(screen.queryByTestId(TestID.removeRule)).toBeNull();
+  });
+});
+
+describe('QueryBuilder feature coverage', () => {
+  const flat: RuleGroupType = {
+    combinator: 'and',
+    rules: [{ id: 'r1', field: 'firstName', operator: '=', value: 'Steve' }],
+  };
+
+  it('offers named parameters when `valueSource` is `"parameter"`', async () => {
+    const onQueryChange = vi.fn();
+    render(QueryBuilder, {
+      props: {
+        fields: [{ name: 'firstName', label: 'First', valueSources: ['value', 'parameter'] }],
+        defaultQuery: {
+          combinator: 'and',
+          rules: [
+            { id: 'r1', field: 'firstName', operator: '=', value: '', valueSource: 'parameter' },
+          ],
+        } satisfies RuleGroupType,
+        getParameters: () => [
+          { name: 'p1', label: 'Parameter one' },
+          { name: 'p2', label: 'Parameter two' },
+        ],
+        onQueryChange,
+      },
+    });
+
+    const editor = screen.getByTestId(TestID.valueEditor);
+    expect(editor.tagName).toBe('SELECT');
+    expect([...editor.querySelectorAll('option')].map(o => o.value)).toEqual(['p1', 'p2']);
+
+    await userEvent.selectOptions(editor, 'p2');
+
+    expect(onQueryChange.mock.lastCall![0].rules[0]).toMatchObject({
+      value: 'p2',
+      valueSource: 'parameter',
+    });
+  });
+
+  it('applies per-rule validation results from `validationMap`', () => {
+    render(QueryBuilder, {
+      props: {
+        fields,
+        defaultQuery: flat,
+        validator: () => ({ r1: { valid: false, reasons: ['nope'] } }),
+      },
+    });
+
+    expect(screen.getByTestId(TestID.rule)).toHaveClass(sc.invalid);
+  });
+
+  it('uses a custom `accessibleDescriptionGenerator`', () => {
+    render(QueryBuilder, {
+      props: {
+        fields,
+        defaultQuery: flat,
+        accessibleDescriptionGenerator: ({ path }) => `group at ${JSON.stringify(path)}`,
+      },
+    });
+
+    expect(screen.getByTestId(TestID.ruleGroup)).toHaveAttribute('title', 'group at []');
+  });
+
+  it('mutes a rule', async () => {
+    const onQueryChange = vi.fn();
+    render(QueryBuilder, {
+      props: { fields, defaultQuery: flat, showMuteButtons: true, onQueryChange },
+    });
+
+    await userEvent.click(screen.getByTestId(TestID.muteRule));
+
+    expect(onQueryChange.mock.lastCall![0].rules[0]).toMatchObject({ muted: true });
+    expect(screen.getByTestId(TestID.rule)).toHaveClass(sc.muted);
   });
 });

@@ -67,9 +67,14 @@ describe('RuleGroup', () => {
       },
     });
 
-    // The corresponding components arrive in milestone B; until then the flags only affect
-    // whether the combinator selector is rendered in the header.
-    expect(screen.queryByTestId(TestID.combinators)).toBeNull();
+    // `showCombinatorsBetweenRules` moves the combinator selector out of the header and into an
+    // inline combinator between each pair of rules.
+    expect(screen.queryAllByTestId(TestID.notToggle).length).toBeGreaterThan(0);
+    expect(screen.queryAllByTestId(TestID.shiftActions).length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId(TestID.undoRedoActions)).toHaveLength(1);
+    for (const combinator of screen.getAllByTestId(TestID.combinators)) {
+      expect(combinator.closest(`[data-testid="${TestID.inlineCombinator}"]`)).not.toBeNull();
+    }
   });
 
   it('marks inline combinators on the wrapper', () => {

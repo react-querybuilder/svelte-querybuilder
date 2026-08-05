@@ -7,4 +7,6 @@ export * from './createActions.svelte';
 export * from './createQueryBuilderState.svelte';
 export * from './ruleContext.svelte';
 export * from './ruleGroupContext.svelte';
+export * from './ruleGroupParts.svelte';
+export * from './ruleParts.svelte';
 export * from './valueEditorEffect.svelte';

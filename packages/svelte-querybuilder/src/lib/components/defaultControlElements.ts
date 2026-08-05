@@ -1,20 +1,22 @@
 import type { FullField } from '@react-querybuilder/core';
-import { nullComponent } from '../reactive/context.svelte';
 import type { Controls } from '../types/controls';
 import ActionElement from './ActionElement.svelte';
+import InlineCombinator from './InlineCombinator.svelte';
+import MatchModeEditor from './MatchModeEditor.svelte';
+import NotToggle from './NotToggle.svelte';
 import Rule from './Rule.svelte';
 import RuleGroup from './RuleGroup.svelte';
+import ShiftActions from './ShiftActions.svelte';
+import UndoRedoActions from './UndoRedoActions.svelte';
 import ValueEditor from './ValueEditor.svelte';
 import ValueSelector from './ValueSelector.svelte';
 
 /**
  * The default component for every control.
  *
- * Milestone A of the implementation plan ships six components; the remaining controls
- * (`inlineCombinator`, `matchModeEditor`, `notToggle`, `shiftActions`, `undoRedoActions`)
- * resolve to a component that renders nothing until step 5. Each is gated behind a flag that
- * defaults to `false`, or—for `inlineCombinator`—behind `showCombinatorsBetweenRules` or an
- * independent-combinators query.
+ * Divergence from React Query Builder: `undoRedoActions` has a default here. Upstream it is
+ * `null` unless the `react-querybuilder/history` entry point is used, because history lives in
+ * the Redux store; here `QueryManager` owns it and is always constructed with `history: true`.
  */
 export const defaultControlElements: Controls<FullField, string> = {
   actionElement: ActionElement,
@@ -24,20 +26,20 @@ export const defaultControlElements: Controls<FullField, string> = {
   cloneRuleAction: ActionElement,
   combinatorSelector: ValueSelector,
   fieldSelector: ValueSelector,
-  inlineCombinator: nullComponent,
+  inlineCombinator: InlineCombinator,
   lockGroupAction: ActionElement,
   lockRuleAction: ActionElement,
-  matchModeEditor: nullComponent,
+  matchModeEditor: MatchModeEditor,
   muteGroupAction: ActionElement,
   muteRuleAction: ActionElement,
-  notToggle: nullComponent,
+  notToggle: NotToggle,
   operatorSelector: ValueSelector,
   removeGroupAction: ActionElement,
   removeRuleAction: ActionElement,
   rule: Rule,
   ruleGroup: RuleGroup,
-  shiftActions: nullComponent,
-  undoRedoActions: nullComponent,
+  shiftActions: ShiftActions,
+  undoRedoActions: UndoRedoActions,
   valueEditor: ValueEditor,
   valueSelector: ValueSelector,
   valueSourceSelector: ValueSelector,

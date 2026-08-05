@@ -291,12 +291,17 @@ export interface ShiftActionsProps extends CommonSubComponentProps {
   ruleOrGroup: RuleGroupTypeAny | RuleType;
   /**
    * Method to shift the rule/group up one place.
+   *
+   * Divergence from React Query Builder, which types these as `() => void` but wires them
+   * directly to `onClick` and therefore passes the event anyway. `Rule`/`RuleGroup` read
+   * `event.altKey` to decide whether to shift the rule/group into or out of the adjacent group,
+   * so the parameter is part of the contract.
    */
-  shiftUp?: () => void;
+  shiftUp?: (event?: MouseEvent) => void;
   /**
-   * Method to shift the rule/group down one place.
+   * Method to shift the rule/group down one place. See {@link ShiftActionsProps.shiftUp}.
    */
-  shiftDown?: () => void;
+  shiftDown?: (event?: MouseEvent) => void;
   /**
    * Whether shifting the rule/group up is disallowed.
    */

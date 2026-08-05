@@ -346,7 +346,12 @@ export const createQueryBuilderState = <
       },
       { idGenerator: initialProps.idGenerator }
     );
-    if (!Object.is(candidate, manager.getQuery())) setManagerQuery(manager, candidate);
+    if (!Object.is(candidate, manager.getQuery())) {
+      setManagerQuery(manager, candidate);
+      // Seeding the query is not a user action, so it must not be undoable. Without this,
+      // `UndoRedoActions` would render an enabled "undo" button on first paint.
+      manager.clearHistory();
+    }
   }
   // #endregion
 
