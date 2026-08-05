@@ -1,10 +1,11 @@
 /**
  * `svelte-querybuilder` public API.
  *
- * Components and types are added in steps 2–5 of the implementation plan. For now this barrel only
- * re-exports the core, so downstream consumers never need a direct `@react-querybuilder/core`
- * dependency.
+ * The barrel also re-exports `@react-querybuilder/core` in its entirety, so downstream consumers
+ * never need a direct core dependency.
  */
 
+export * from './components';
+export * from './reactive';
 export type * from './types';
 export * from '@react-querybuilder/core';
