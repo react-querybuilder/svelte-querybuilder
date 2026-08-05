@@ -7,6 +7,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-08-05
+
+### Fixed
+
+- README.md included when publishing.
+
 ## [0.1.0] - 2026-08-05
 
 First release. A Svelte 5 port of [React Query Builder](https://react-querybuilder.js.org), built on `@react-querybuilder/core`.
@@ -52,5 +58,6 @@ First release. A Svelte 5 port of [React Query Builder](https://react-querybuild
 
 - Axe's best-practice rule `label-title-only` fires on every selector and text editor: React Query Builder labels them with `title` alone, and full DOM parity is a locked decision for this port. It is not a WCAG failure (`title` does produce an accessible name), and the a11y suite asserts it is the _only_ best-practice violation, so any other regression still fails. Supply a labeled control through `controlElements` or a snippet if you need a visible label.
 
-[unreleased]: https://github.com/react-querybuilder/svelte-querybuilder/compare/v0.1.0...HEAD
+[unreleased]: https://github.com/react-querybuilder/svelte-querybuilder/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/react-querybuilder/svelte-querybuilder/releases/tag/v0.1.1
 [0.1.0]: https://github.com/react-querybuilder/svelte-querybuilder/releases/tag/v0.1.0
