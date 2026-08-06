@@ -21,22 +21,14 @@ import type {
 } from '@react-querybuilder/core';
 import {
   QueryManager,
-  defaultCombinatorLabelMap,
-  defaultCombinators,
-  defaultOperatorLabelMap,
-  defaultOperators,
   deriveQueryBuilderClassNames,
   generateAccessibleDescription,
-  getMatchModesUtil,
   getRuleDefaultValue,
-  getValueSourcesUtil,
   isRuleGroupTypeIC,
   prepareOptionList,
   resolveCandidateQuery,
   resolveDefaultOperator,
-  resolveOperatorList,
-  resolveValueEditorType,
-  resolveValueList,
+  toFlatOptionArray,
   unchangedSignature,
 } from '@react-querybuilder/core';
 import { untrack } from 'svelte';
@@ -157,131 +149,6 @@ export const createQueryBuilderState = <
     }) satisfies MergedQueryBuilderConfig<F, OName>
   );
 
-  // #region Option lists
-  // Computed here rather than read from the manager because the placeholder options depend on
-  // the merged translations, which the manager knows nothing about.
-  const preparedFields = $derived(
-    prepareOptionList<F>({
-      placeholder: config.translations.fields,
-      optionList: getProps().fields,
-      autoSelectOption: config.autoSelectField,
-      baseOption: getProps().baseField,
-    })
-  );
-  const fields = $derived(preparedFields.optionList);
-  const fieldMap = $derived(preparedFields.optionsMap as Partial<FullOptionRecord<F>>);
-
-  const combinators = $derived(
-    prepareOptionList<FullCombinator>({
-      optionList: getProps().combinators ?? defaultCombinators,
-      labelMap: defaultCombinatorLabelMap,
-      baseOption: getProps().baseCombinator,
-      autoSelectOption: true,
-    }).optionList
-  );
-
-  const operators = $derived(
-    prepareOptionList<O>({
-      optionList: (getProps().operators ?? defaultOperators) as never,
-      placeholder: config.translations.operators,
-      labelMap: defaultOperatorLabelMap,
-      baseOption: getProps().baseOperator,
-      autoSelectOption: config.autoSelectOperator,
-    }).optionList
-  );
-  // #endregion
-
-  // #region Resolvers
-  const getParameters = (
-    field?: string,
-    operator?: string,
-    misc?: { fieldData: F }
-  ): FullOptionList<FullOption> =>
-    prepareOptionList<FullOption>({
-      optionList: getProps().getParameters?.(field as FName, operator as OName, misc) ?? [],
-      autoSelectOption: true,
-    }).optionList;
-
-  const getOperators = (field: string, { fieldData }: { fieldData: F }): FullOptionList<O> =>
-    resolveOperatorList<F, O>({
-      field,
-      fieldData,
-      getOperators: getProps().getOperators as never,
-      operators,
-      placeholder: config.translations.operators,
-      baseOption: getProps().baseOperator,
-      autoSelectOption: config.autoSelectOperator,
-    });
-
-  const getValueEditorType = (
-    field: string,
-    operator: string,
-    { fieldData }: { fieldData: F }
-  ): ValueEditorType =>
-    resolveValueEditorType<F>({
-      field,
-      operator,
-      fieldData,
-      getValueEditorType: getProps().getValueEditorType as never,
-    });
-
-  const getValues = (
-    field: string,
-    operator: string,
-    { fieldData }: { fieldData: F }
-  ): FullOptionList<Option> =>
-    resolveValueList<F>({
-      field,
-      operator,
-      fieldData,
-      getValues: getProps().getValues as never,
-      placeholder: config.translations.values,
-      autoSelectOption: config.autoSelectValue,
-    });
-
-  const getValueSources = (field: string, operator: string): ValueSourceFullOptions =>
-    getValueSourcesUtil<F, string>(
-      (fieldMap[field as FName] ?? {}) as F,
-      operator,
-      getProps().getValueSources as never
-    );
-
-  const getMatchModes = (field: string): MatchModeOptions =>
-    getMatchModesUtil<F>((fieldMap[field as FName] ?? {}) as F, getProps().getMatchModes as never);
-
-  const getInputType = (
-    field: string,
-    operator: string,
-    { fieldData }: { fieldData: F }
-  ): InputType | null =>
-    getProps().getInputType?.(field as FName, operator as OName, { fieldData }) ?? 'text';
-
-  const getSubQueryBuilderProps = (
-    field: string,
-    misc: { fieldData: F }
-    // oxlint-disable-next-line typescript/no-explicit-any
-  ): any => getProps().getSubQueryBuilderProps?.(field as FName, misc) ?? {};
-
-  const getRuleDefaultValueMain = (rule: RuleType): unknown =>
-    getRuleDefaultValue<F>(rule, {
-      fieldData: (fieldMap[rule.field as FName] ?? {}) as F,
-      fields,
-      getParameters,
-      getValueEditorType,
-      getValues,
-      listsAsArrays: config.listsAsArrays,
-      getDefaultValue: getProps().getDefaultValue as never,
-    });
-
-  const getRuleDefaultOperator = (field: string): string =>
-    resolveDefaultOperator<F>({
-      field,
-      fieldData: (fieldMap[field as FName] ?? {}) as F,
-      getDefaultOperator: getProps().getDefaultOperator as never,
-      getOperators,
-    });
-  // #endregion
-
   // #region Manager
   const initialProps = getProps();
   const maxLevels = (initialProps.maxLevels ?? 0) > 0 ? Number(initialProps.maxLevels) : Infinity;
@@ -291,6 +158,19 @@ export const createQueryBuilderState = <
 
   // Read once: the manager's structural options are fixed for its lifetime.
   const initialConfig = untrack(() => config);
+
+  /**
+   * Forwards a function prop to the manager through a closure, so later changes to the prop take
+   * effect without rebuilding the manager. Returns `undefined` when the prop is absent at
+   * initialization, leaving the manager to apply its own precedence rules instead of treating the
+   * option as configured.
+   */
+  const live = <A extends unknown[], R>(
+    pick: (props: QueryBuilderProps<RuleGroupTypeAny, F, O, FullCombinator>) => unknown
+  ): ((...args: A) => R) | undefined =>
+    typeof pick(initialProps) === 'function'
+      ? (...args: A) => (pick(getProps()) as (...args: A) => R)(...args)
+      : undefined;
 
   const managerOptions: QueryManagerOptions<F, O, FullCombinator> = {
     fields: initialProps.fields,
@@ -302,6 +182,9 @@ export const createQueryBuilderState = <
     autoSelectField: initialConfig.autoSelectField,
     autoSelectOperator: initialConfig.autoSelectOperator,
     autoSelectValue: initialConfig.autoSelectValue,
+    // The manager prepares every option list, including the placeholder options, so it needs the
+    // merged translations. Everything rendered here reads those lists back off the manager.
+    translations: initialConfig.translations,
     addRuleToNewGroups: initialConfig.addRuleToNewGroups,
     listsAsArrays: initialConfig.listsAsArrays,
     resetOnFieldChange: initialConfig.resetOnFieldChange,
@@ -314,21 +197,18 @@ export const createQueryBuilderState = <
     idGenerator: initialProps.idGenerator,
     // Forwarded so that changes to these props take effect without rebuilding the manager.
     getDefaultField: initialProps.getDefaultField as never,
-    getDefaultOperator: (field: string) => getRuleDefaultOperator(field),
-    getDefaultValue: (rule: RuleType, _misc: { fieldData: F }) => getRuleDefaultValueMain(rule),
-    getOperators: (field: string, misc: { fieldData: F }) => getOperators(field, misc) as never,
-    getValueEditorType: (field: string, operator: string, misc: { fieldData: F }) =>
-      getValueEditorType(field, operator, misc),
-    getValues: (field: string, operator: string, misc: { fieldData: F }) =>
-      getValues(field, operator, misc),
-    getValueSources: (field: string, operator: string) => getValueSources(field, operator),
-    getMatchModes: (field: string) => getMatchModes(field),
-    getParameters: (field: string, operator: string, misc: { fieldData: F }) =>
-      getParameters(field, operator, misc),
-    getInputType: (field: string, operator: string, misc: { fieldData: F }) =>
-      getInputType(field, operator, misc),
-    getSubQueryBuilderProps: (field: string, misc: { fieldData: F }) =>
-      getSubQueryBuilderProps(field, misc),
+    getDefaultOperator: (typeof initialProps.getDefaultOperator === 'function'
+      ? live(p => p.getDefaultOperator)
+      : initialProps.getDefaultOperator) as never,
+    getDefaultValue: live(p => p.getDefaultValue) as never,
+    getOperators: live(p => p.getOperators) as never,
+    getValueEditorType: live(p => p.getValueEditorType) as never,
+    getValues: live(p => p.getValues) as never,
+    getValueSources: live(p => p.getValueSources) as never,
+    getMatchModes: live(p => p.getMatchModes) as never,
+    getParameters: live(p => p.getParameters) as never,
+    getInputType: live(p => p.getInputType) as never,
+    getSubQueryBuilderProps: live(p => p.getSubQueryBuilderProps) as never,
   };
 
   const manager =
@@ -351,6 +231,78 @@ export const createQueryBuilderState = <
       manager.clearHistory();
     }
   }
+  // #endregion
+
+  // #region Option lists
+  // Read off the manager, which prepares them from the same options—including `translations`,
+  // which supplies the placeholder options when `autoSelect*` is `false`. Fixed for the
+  // manager's lifetime, so a changed `fields`/`operators`/`combinators`/`translations` prop does
+  // not update them.
+  const fields = manager.getFields();
+  const combinators = manager.getCombinators();
+  const fieldMap = Object.fromEntries(
+    toFlatOptionArray(fields as FullOptionList<FullOption>).map(f => [f.value ?? f.name, f])
+  ) as Partial<FullOptionRecord<F>>;
+  // #endregion
+
+  // #region Resolvers
+  const getParameters = (
+    field?: string,
+    operator?: string,
+    misc?: { fieldData: F }
+  ): FullOptionList<FullOption> =>
+    prepareOptionList<FullOption>({
+      optionList: getProps().getParameters?.(field as FName, operator as OName, misc) ?? [],
+      autoSelectOption: true,
+    }).optionList;
+
+  const getOperators = (field: string): FullOptionList<O> =>
+    manager.getOperators(field) as FullOptionList<O>;
+
+  const getValueEditorType = (field: string, operator: string): ValueEditorType =>
+    manager.getValueEditorType(field, operator);
+
+  const getValues = (field: string, operator: string): FullOptionList<Option> =>
+    manager.getValues(field, operator);
+
+  const getValueSources = (field: string, operator: string): ValueSourceFullOptions =>
+    manager.getValueSources(field, operator);
+
+  const getMatchModes = (field: string): MatchModeOptions => manager.getMatchModes(field);
+
+  const getInputType = (
+    field: string,
+    operator: string,
+    { fieldData }: { fieldData: F }
+  ): InputType | null =>
+    getProps().getInputType?.(field as FName, operator as OName, { fieldData }) ?? 'text';
+
+  const getSubQueryBuilderProps = (
+    field: string,
+    misc: { fieldData: F }
+    // oxlint-disable-next-line typescript/no-explicit-any
+  ): any => getProps().getSubQueryBuilderProps?.(field as FName, misc) ?? {};
+
+  // The manager computes rule defaults internally for `createRule`; these expose the same
+  // derivation to the schema, so they must stay in sync with the manager's option lists.
+  const getRuleDefaultValueMain = (rule: RuleType): unknown =>
+    getRuleDefaultValue<F>(rule, {
+      fieldData: manager.getFieldData(rule.field),
+      fields,
+      getParameters,
+      getValueEditorType,
+      getValues,
+      listsAsArrays: config.listsAsArrays,
+      getDefaultValue: getProps().getDefaultValue as never,
+    });
+
+  const getRuleDefaultOperator = (field: string): string =>
+    resolveDefaultOperator<F>({
+      field,
+      fieldData: manager.getFieldData(field),
+      getDefaultOperator: getProps().getDefaultOperator as never,
+      getOperators,
+    });
   // #endregion
 
   // #region Query state

@@ -206,6 +206,34 @@ describe('createQueryBuilderState', () => {
       cleanup();
     });
 
+    it('prepares option lists with the manager, which receives the merged translations', () => {
+      const { result: state, cleanup } = withRoot(() =>
+        createQueryBuilderState(() => ({
+          fields,
+          autoSelectField: false,
+          autoSelectOperator: false,
+          autoSelectValue: false,
+          getValues: () => [{ name: 'x', label: 'X' }],
+          translations: {
+            fields: { placeholderLabel: 'Pick a field' },
+            operators: { placeholderLabel: 'Pick an operator' },
+            values: { placeholderLabel: 'Pick a value' },
+          },
+        }))
+      );
+      const { schema, manager } = state;
+      expect(schema.fields).toEqual(manager.getFields());
+      expect(schema.combinators).toEqual(manager.getCombinators());
+      expect(schema.fields[0]).toHaveProperty('label', 'Pick a field');
+      expect(
+        schema.getOperators('firstName', { fieldData: schema.fieldMap.firstName! })[0]
+      ).toHaveProperty('label', 'Pick an operator');
+      expect(
+        schema.getValues('firstName', '=', { fieldData: schema.fieldMap.firstName! })[0]
+      ).toHaveProperty('label', 'Pick a value');
+      cleanup();
+    });
+
     it('defaults getInputType to text and honors the prop', () => {
       const { result: state, cleanup } = withRoot(() =>
         createQueryBuilderState(() => ({ fields, getInputType: () => 'number' }))

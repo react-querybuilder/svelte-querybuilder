@@ -7,6 +7,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- Option lists (fields, combinators, operators, values) are now prepared by the `QueryManager`, which takes `translations` and therefore produces the placeholder options itself when `autoSelectField`/`autoSelectOperator`/`autoSelectValue` is `false`. `createQueryBuilderState` reads the lists back off the manager (`getFields`, `getCombinators`, `getOperators`, `getValues`) instead of running `prepareOptionList` a second time, so the rendered lists and the values the manager assigns to new rules can no longer disagree. The remaining resolver props are forwarded to the manager as-is.
+- **Breaking:** option lists are fixed for the manager's lifetime. Changing the `fields`, `operators`, `combinators`, `translations`, or `autoSelect*` props after the first render no longer updates the selectors, since the manager has no reconfigure API. Recreate the component (e.g. with `{#key}`) to change them.
+
 ## [0.1.1] - 2026-08-05
 
 ### Fixed
