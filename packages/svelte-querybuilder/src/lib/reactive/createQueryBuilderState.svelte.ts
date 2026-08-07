@@ -46,6 +46,40 @@ const defaultGetValueEditorSeparator = (): LabelNode => '';
 const defaultGetRuleOrGroupClassname = (): string => '';
 
 /**
+ * Structural equality for manager option values, used to decide whether a prop change is worth a
+ * `reconfigure`. Arrays and plain objects are compared by value; everything else—functions
+ * included—by identity, which is what makes a config object rebuilt on every render compare equal
+ * as long as its data did not change.
+ */
+const valuesEqual = (a: unknown, b: unknown): boolean => {
+  if (Object.is(a, b)) return true;
+  if (Array.isArray(a) || Array.isArray(b)) {
+    return (
+      Array.isArray(a) &&
+      Array.isArray(b) &&
+      a.length === b.length &&
+      a.every((v, i) => valuesEqual(v, b[i]))
+    );
+  }
+  if (
+    typeof a !== 'object' ||
+    typeof b !== 'object' ||
+    a === null ||
+    b === null ||
+    Object.getPrototypeOf(a) !== Object.getPrototypeOf(b)
+  ) {
+    return false;
+  }
+  const aKeys = Object.keys(a);
+  return (
+    aKeys.length === Object.keys(b).length &&
+    aKeys.every(k =>
+      valuesEqual((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k])
+    )
+  );
+};
+
+/**
  * Applies a query to the manager.
  *
  * The manager deep-freezes whatever it is given, which throws if the query is a deeply reactive
@@ -125,9 +159,11 @@ export interface CreateQueryBuilderStateOptions<F extends FullField, O extends s
  * `manager` prop to drive the query from outside the component tree.
  *
  * Structural manager options (`fields`, `operators`, `combinators`, and the boolean flags) are
- * read once, when the manager is constructed. Function props (`getOperators`, `getDefaultValue`,
- * etc.) are forwarded through closures, so those stay live. Rendering always reflects the
- * current props regardless.
+ * applied in place with `QueryManager#reconfigure` whenever the corresponding props change, so
+ * the query, the undo/redo history, and every subscriber survive. Function props
+ * (`getOperators`, `getDefaultValue`, etc.) are forwarded through closures, so those stay live
+ * without any reconfiguration at all. An externally supplied `manager` prop is never
+ * reconfigured.
  */
 export const createQueryBuilderState = <
   F extends FullField = FullField,
@@ -151,13 +187,13 @@ export const createQueryBuilderState = <
 
   // #region Manager
   const initialProps = getProps();
-  const maxLevels = (initialProps.maxLevels ?? 0) > 0 ? Number(initialProps.maxLevels) : Infinity;
-  const disabledPathsInit = Array.isArray(initialProps.disabled)
-    ? initialProps.disabled
-    : emptyDisabledPaths;
 
-  // Read once: the manager's structural options are fixed for its lifetime.
-  const initialConfig = untrack(() => config);
+  const maxLevels = $derived(
+    (getProps().maxLevels ?? 0) > 0 ? Number(getProps().maxLevels) : Infinity
+  );
+  const disabledPaths = $derived(
+    Array.isArray(getProps().disabled) ? (getProps().disabled as Path[]) : emptyDisabledPaths
+  );
 
   /**
    * Forwards a function prop to the manager through a closure, so later changes to the prop take
@@ -172,48 +208,87 @@ export const createQueryBuilderState = <
       ? (...args: A) => (pick(getProps()) as (...args: A) => R)(...args)
       : undefined;
 
-  const managerOptions: QueryManagerOptions<F, O, FullCombinator> = {
-    fields: initialProps.fields,
-    operators: initialProps.operators,
-    combinators: initialProps.combinators,
-    baseField: initialProps.baseField,
-    baseOperator: initialProps.baseOperator,
-    baseCombinator: initialProps.baseCombinator,
-    autoSelectField: initialConfig.autoSelectField,
-    autoSelectOperator: initialConfig.autoSelectOperator,
-    autoSelectValue: initialConfig.autoSelectValue,
-    // The manager prepares every option list, including the placeholder options, so it needs the
-    // merged translations. Everything rendered here reads those lists back off the manager.
-    translations: initialConfig.translations,
-    addRuleToNewGroups: initialConfig.addRuleToNewGroups,
-    listsAsArrays: initialConfig.listsAsArrays,
-    resetOnFieldChange: initialConfig.resetOnFieldChange,
-    resetOnOperatorChange: initialConfig.resetOnOperatorChange,
-    maxLevels,
-    disabledPaths: disabledPathsInit,
-    queryDisabled: initialProps.disabled === true,
-    history: true,
-    validator: initialProps.validator,
-    idGenerator: initialProps.idGenerator,
-    // Forwarded so that changes to these props take effect without rebuilding the manager.
-    getDefaultField: initialProps.getDefaultField as never,
-    getDefaultOperator: (typeof initialProps.getDefaultOperator === 'function'
-      ? live(p => p.getDefaultOperator)
-      : initialProps.getDefaultOperator) as never,
-    getDefaultValue: live(p => p.getDefaultValue) as never,
-    getOperators: live(p => p.getOperators) as never,
-    getValueEditorType: live(p => p.getValueEditorType) as never,
-    getValues: live(p => p.getValues) as never,
-    getValueSources: live(p => p.getValueSources) as never,
-    getMatchModes: live(p => p.getMatchModes) as never,
-    getParameters: live(p => p.getParameters) as never,
-    getInputType: live(p => p.getInputType) as never,
-    getSubQueryBuilderProps: live(p => p.getSubQueryBuilderProps) as never,
+  /**
+   * Builds the full option set for the manager. Used both for construction and for every
+   * `reconfigure` call, so the two cannot drift.
+   */
+  const buildManagerOptions = (): QueryManagerOptions<F, O, FullCombinator> => {
+    const props = getProps();
+    return {
+      fields: props.fields,
+      operators: props.operators,
+      combinators: props.combinators,
+      baseField: props.baseField,
+      baseOperator: props.baseOperator,
+      baseCombinator: props.baseCombinator,
+      autoSelectField: config.autoSelectField,
+      autoSelectOperator: config.autoSelectOperator,
+      autoSelectValue: config.autoSelectValue,
+      // The manager prepares every option list, including the placeholder options, so it needs
+      // the merged translations. Everything rendered here reads those lists back off the manager.
+      translations: config.translations,
+      addRuleToNewGroups: config.addRuleToNewGroups,
+      listsAsArrays: config.listsAsArrays,
+      resetOnFieldChange: config.resetOnFieldChange,
+      resetOnOperatorChange: config.resetOnOperatorChange,
+      maxLevels,
+      disabledPaths,
+      queryDisabled: props.disabled === true,
+      history: true,
+      validator: props.validator,
+      idGenerator: props.idGenerator,
+      // Forwarded so that changes to these props take effect without a reconfigure.
+      getDefaultField: (typeof initialProps.getDefaultField === 'function'
+        ? live(p => p.getDefaultField)
+        : props.getDefaultField) as never,
+      getDefaultOperator: (typeof initialProps.getDefaultOperator === 'function'
+        ? live(p => p.getDefaultOperator)
+        : props.getDefaultOperator) as never,
+      getDefaultValue: live(p => p.getDefaultValue) as never,
+      getOperators: live(p => p.getOperators) as never,
+      getValueEditorType: live(p => p.getValueEditorType) as never,
+      getValues: live(p => p.getValues) as never,
+      getValueSources: live(p => p.getValueSources) as never,
+      getMatchModes: live(p => p.getMatchModes) as never,
+      getParameters: live(p => p.getParameters) as never,
+      getInputType: live(p => p.getInputType) as never,
+      getSubQueryBuilderProps: live(p => p.getSubQueryBuilderProps) as never,
+    };
+  };
+
+  /**
+   * The subset of the manager's options that cannot be forwarded through a closure, and so has to
+   * be re-applied with `reconfigure` when it changes. Doubles as the effect's dependency set.
+   */
+  const structuralOptions = () => {
+    const props = getProps();
+    return {
+      fields: props.fields,
+      operators: props.operators,
+      combinators: props.combinators,
+      baseField: props.baseField,
+      baseOperator: props.baseOperator,
+      baseCombinator: props.baseCombinator,
+      autoSelectField: config.autoSelectField,
+      autoSelectOperator: config.autoSelectOperator,
+      autoSelectValue: config.autoSelectValue,
+      translations: config.translations,
+      addRuleToNewGroups: config.addRuleToNewGroups,
+      listsAsArrays: config.listsAsArrays,
+      resetOnFieldChange: config.resetOnFieldChange,
+      resetOnOperatorChange: config.resetOnOperatorChange,
+      maxLevels,
+      disabledPaths,
+      queryDisabled: props.disabled === true,
+    };
   };
 
   const manager =
     (initialProps.manager as QueryManager<RuleGroupTypeAny, F, FullOperator, FullCombinator>) ??
-    new QueryManager<RuleGroupTypeAny, F, O, FullCombinator>(undefined, managerOptions);
+    new QueryManager<RuleGroupTypeAny, F, O, FullCombinator>(
+      undefined,
+      untrack(() => buildManagerOptions())
+    );
 
   if (!initialProps.manager) {
     const candidate = resolveCandidateQuery(
@@ -235,14 +310,23 @@ export const createQueryBuilderState = <
 
   // #region Option lists
   // Read off the manager, which prepares them from the same options—including `translations`,
-  // which supplies the placeholder options when `autoSelect*` is `false`. Fixed for the
-  // manager's lifetime, so a changed `fields`/`operators`/`combinators`/`translations` prop does
-  // not update them.
-  const fields = manager.getFields();
-  const combinators = manager.getCombinators();
-  const fieldMap = Object.fromEntries(
-    toFlatOptionArray(fields as FullOptionList<FullOption>).map(f => [f.value ?? f.name, f])
-  ) as Partial<FullOptionRecord<F>>;
+  // which supplies the placeholder options when `autoSelect*` is `false`. Keyed on
+  // `configVersion` so that a reconfigure (see below) refreshes them.
+  let configVersion = $state.raw(manager.getConfigVersion());
+
+  const fields = $derived.by(() => {
+    void configVersion;
+    return manager.getFields();
+  });
+  const combinators = $derived.by(() => {
+    void configVersion;
+    return manager.getCombinators();
+  });
+  const fieldMap = $derived(
+    Object.fromEntries(
+      toFlatOptionArray(fields as FullOptionList<FullOption>).map(f => [f.value ?? f.name, f])
+    ) as Partial<FullOptionRecord<F>>
+  );
   // #endregion
 
   // #region Resolvers
@@ -310,9 +394,14 @@ export const createQueryBuilderState = <
   // proxy would both defeat reference comparison and be rejected by the manager's deep freeze.
   let query = $state.raw<RuleGroupTypeAny>(manager.getQuery());
   let hasNotifiedMount = false;
+  // A non-reactive mirror of `query`. The subscription callback runs synchronously inside
+  // whichever effect triggered the mutation, so reading `query` there would make that effect
+  // depend on the state it just caused to change.
+  let committed = manager.getQuery();
 
   const commit = (nextQuery: RuleGroupTypeAny) => {
     query = nextQuery;
+    committed = nextQuery;
     getProps().onQueryChange?.(nextQuery as never);
     options.writeBack?.(nextQuery);
   };
@@ -322,7 +411,14 @@ export const createQueryBuilderState = <
   $effect(() =>
     untrack(() => {
       const unsubscribe = manager.subscribe(() => {
-        commit(manager.getQuery());
+        // A reconfigure notifies without touching the query. Refresh the config version
+        // unconditionally, but only commit—and therefore only fire `onQueryChange`—when the
+        // query actually changed.
+        configVersion = manager.getConfigVersion();
+        const nextQuery = manager.getQuery();
+        if (!Object.is(nextQuery, committed)) {
+          commit(nextQuery);
+        }
       });
 
       // Catch up on anything that changed between initialization and mount.
@@ -352,15 +448,47 @@ export const createQueryBuilderState = <
       setManagerQuery(manager, nextQuery);
     }
   });
+
+  // Structural options are applied in place, so the query, the undo/redo history, and every
+  // subscriber survive a config change. Skipped for an externally supplied manager: that one
+  // belongs to the consumer.
+  if (!initialProps.manager) {
+    let appliedSignature = untrack(() => structuralOptions());
+
+    $effect(() => {
+      // Reading the signature is what registers the dependencies: the structural props plus the
+      // parts of `config` the manager consumes. Function props are deliberately excluded—they
+      // reach the manager through `live()` closures and stay current on their own, and comparing
+      // them would defeat the equality gate below for anyone passing inline arrows.
+      const next = structuralOptions();
+      if (valuesEqual(next, appliedSignature)) return;
+      appliedSignature = next;
+
+      untrack(() => {
+        const nextOptions = buildManagerOptions();
+        try {
+          manager.reconfigure(nextOptions);
+        } catch {
+          // Same problem as `setManagerQuery`: the manager freezes the option lists, which
+          // throws for a deeply reactive `$state` proxy. Every key is present in the rebuilt
+          // options, so re-applying from a snapshot fully overwrites the partial attempt.
+          manager.reconfigure({
+            ...nextOptions,
+            fields: $state.snapshot(nextOptions.fields) as typeof nextOptions.fields,
+            operators: $state.snapshot(nextOptions.operators) as typeof nextOptions.operators,
+            combinators: $state.snapshot(nextOptions.combinators) as typeof nextOptions.combinators,
+            disabledPaths: $state.snapshot(nextOptions.disabledPaths) as Path[],
+          });
+        }
+      });
+    });
+  }
   // #endregion
 
   const actions = createActions(getProps, manager);
 
   // #region Derived config
   const independentCombinators = $derived(isRuleGroupTypeIC(query));
-  const disabledPaths = $derived(
-    Array.isArray(getProps().disabled) ? (getProps().disabled as Path[]) : emptyDisabledPaths
-  );
   const queryDisabled = $derived(getProps().disabled === true);
   const rootGroupDisabled = $derived(!!query.disabled || disabledPaths.some(p => p.length === 0));
 

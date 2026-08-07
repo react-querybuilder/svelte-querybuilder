@@ -104,4 +104,4 @@ React's hooks have no direct equivalents, and the `useMemo` graphs in `Rule`/`Ru
 
 ## Known behavioral note
 
-Structural manager options — `fields`, `operators`, `combinators`, and the boolean flags — are captured when the `QueryManager` is constructed. Changing them after mount updates rendering, but not the manager's own defaults for newly created rules. Recreating the manager would discard undo history, so this is deliberate; open an issue if you have a use case that needs it.
+Structural manager options — `fields`, `operators`, `combinators`, `translations`, `maxLevels`, `disabled`, and the boolean flags — are applied to the existing `QueryManager` in place via `QueryManager#reconfigure` whenever the corresponding prop changes. The query, the undo/redo history, and any subscribers survive, so changing `fields` mid-session updates both the rendered selectors and the defaults the manager assigns to newly created rules without losing state. A config-only change does not fire `onQueryChange`. A `manager` supplied through the `manager` prop is never reconfigured — that instance belongs to the caller.

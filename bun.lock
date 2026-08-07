@@ -55,9 +55,9 @@
     },
     "packages/svelte-querybuilder": {
       "name": "svelte-querybuilder",
-      "version": "0.0.0",
+      "version": "0.1.1",
       "dependencies": {
-        "@react-querybuilder/core": "^8.22.2",
+        "@react-querybuilder/core": "^8.22.3",
       },
       "devDependencies": {
         "@arethetypeswrong/cli": "^0.18.2",
@@ -238,7 +238,7 @@
 
     "@polka/url": ["@polka/url@1.0.0-next.29", "", {}, "sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww=="],
 
-    "@react-querybuilder/core": ["@react-querybuilder/core@8.22.2", "", { "dependencies": { "@ts-jison/lexer": "0.4.1-alpha.1", "@ts-jison/parser": "0.4.1-alpha.1", "immer": "^11.1.15", "numeric-quantity": "^3.2.2" }, "peerDependencies": { "@tanstack/db": ">=0.6.9", "@traqula/parser-sparql-1-2": ">=0.1.0", "chevrotain": ">=11", "drizzle-orm": ">=0.38.0", "json-logic-js": ">=2", "jsonata": ">=2", "sequelize": ">=6", "spel2js": ">=0.2.0" }, "optionalPeers": ["@tanstack/db", "@traqula/parser-sparql-1-2", "chevrotain", "drizzle-orm", "json-logic-js", "jsonata", "sequelize", "spel2js"] }, "sha512-0qTTmwHZl33hBM8p7oSibsO2TSdHq8IgX/dv4dAHvZgZT7Wu0ACdN/ca6f+EvhO+ksR1872peMmwGrF+C5zADQ=="],
+    "@react-querybuilder/core": ["@react-querybuilder/core@8.22.3", "", { "dependencies": { "@ts-jison/lexer": "0.4.1-alpha.1", "@ts-jison/parser": "0.4.1-alpha.1", "immer": "^11.1.15", "numeric-quantity": "^3.2.2" }, "peerDependencies": { "@tanstack/db": ">=0.6.9", "@traqula/parser-sparql-1-2": ">=0.1.0", "chevrotain": ">=11", "drizzle-orm": ">=0.38.0", "json-logic-js": ">=2", "jsonata": ">=2", "sequelize": ">=6", "spel2js": ">=0.2.0" }, "optionalPeers": ["@tanstack/db", "@traqula/parser-sparql-1-2", "chevrotain", "drizzle-orm", "json-logic-js", "jsonata", "sequelize", "spel2js"] }, "sha512-/0sJI40ByEb2N+u5Y6PfrOMHN2usmAtFAqay1WALKolCMhurV+z/ZZ5ANAOTcwBTyATvga0sdEYdhudZO5WEvA=="],
 
     "@rolldown/binding-android-arm64": ["@rolldown/binding-android-arm64@1.2.2", "", { "os": "android", "cpu": "arm64" }, "sha512-l7x215OGvo1s52JWmR8U/DAVzEDWBCIbTm28aeJV/WDTSHgcKXaZTuBT0hJMs5NggilfJTW3clZVvd24yfKJxA=="],
 

@@ -10,7 +10,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 
 - Option lists (fields, combinators, operators, values) are now prepared by the `QueryManager`, which takes `translations` and therefore produces the placeholder options itself when `autoSelectField`/`autoSelectOperator`/`autoSelectValue` is `false`. `createQueryBuilderState` reads the lists back off the manager (`getFields`, `getCombinators`, `getOperators`, `getValues`) instead of running `prepareOptionList` a second time, so the rendered lists and the values the manager assigns to new rules can no longer disagree. The remaining resolver props are forwarded to the manager as-is.
-- **Breaking:** option lists are fixed for the manager's lifetime. Changing the `fields`, `operators`, `combinators`, `translations`, or `autoSelect*` props after the first render no longer updates the selectors, since the manager has no reconfigure API. Recreate the component (e.g. with `{#key}`) to change them.
+- Structural options are fully reactive again, and now stay in sync with the manager. Changing `fields`, `operators`, `combinators`, `translations`, `maxLevels`, `disabled`, `validator`, `idGenerator`, or the `autoSelect*` flags after the first render applies them to the existing manager through `QueryManager#reconfigure` (`@react-querybuilder/core` 8.22.3), so the query, the undo/redo history, and every subscriber survive the change. Previously these were captured at construction and could only be changed by recreating the component. There is no opt-out. A `manager` passed through the `manager` prop is never reconfigured.
+- `getDefaultField` is forwarded through a live closure like every other resolver prop, so a changed function prop takes effect without a reconfigure.
+- Minimum `@react-querybuilder/core` is now 8.22.3.
+
+### Fixed
+
+- `onQueryChange` (and the `bind:query` write-back) no longer fires for a configuration-only manager notification, which would previously have re-emitted an unchanged query.
 
 ## [0.1.1] - 2026-08-05
 
@@ -53,7 +59,7 @@ First release. A Svelte 5 port of [React Query Builder](https://react-querybuild
 - Removed: `DragHandleProps`, `UseRuleDnD`, `UseRuleGroupDnD`, the `dragHandle` and `ruleGroupHeaderElements`/`ruleGroupBodyElements` control elements, the `enableDragAndDrop`, `preserveQueryStateOnUnmount`, and `independentCombinators` props, the deprecated `ActionWithRulesProps`/`ActionWithRulesAndAddersProps` aliases, and the deprecated per-prop fallbacks on `RuleProps` and `RuleGroupProps`.
 - `Controls['undoRedoActions']` is non-nullable; undo/redo is backed by `QueryManager` history rather than a separate entry point. `UndoRedoActions` reads `canUndo`/`canRedo` off `schema.manager`; there is no `useQueryBuilderHistory`, no `qbId`, and no `react-querybuilder/history` equivalent.
 - `createQueryBuilderState` clears manager history after seeding the initial query, so undo is disabled on first paint.
-- Query state lives in a `QueryManager` instead of a Redux store, and the query is held in `$state.raw` (queries are immutable and replaced wholesale). Structural manager options (`fields`, `operators`, `combinators`, boolean flags) are read once, when the manager is constructed; function props are forwarded through closures and stay live.
+- Query state lives in a `QueryManager` instead of a Redux store, and the query is held in `$state.raw` (queries are immutable and replaced wholesale). Structural manager options are applied to the manager in place with `reconfigure` when their props change; function props are forwarded through closures and stay live.
 - Controlled mode guards against feedback loops with a reference check followed by a structural signature comparison, so a parent that stores the query in `$state` (handing back a proxy of the object the query builder just emitted) does not loop. Reactive proxies are snapshotted before they reach the manager, which deep-freezes whatever it is given.
 - `RuleGroup` renders its header and body inline instead of delegating to `ruleGroupHeaderElements`/`ruleGroupBodyElements`. Nested rules and groups are rendered through `schema.controls`, so a replacement `rule`/`ruleGroup` component applies at every level.
 - `Rule` resolves its configuration with core's `deriveRuleContext` over `schema`, rather than `QueryManager.getRuleContext(path)`, so a replacement `rule` component can render a rule that is not in the manager's query.
