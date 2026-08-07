@@ -515,7 +515,12 @@ export const createQueryBuilderState = <
   // #endregion
 
   const schema = $derived<Schema<F, OName>>({
-    manager: manager as QueryManager<RuleGroupTypeAny, F, FullOperator, FullCombinator>,
+    manager: manager as unknown as QueryManager<
+      RuleGroupTypeAny,
+      FullField,
+      FullOperator,
+      FullCombinator
+    >,
     fields,
     fieldMap: fieldMap as Schema<F, OName>['fieldMap'],
     classNames: config.classNames,

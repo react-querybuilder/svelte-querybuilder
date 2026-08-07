@@ -36,7 +36,7 @@ export interface Schema<F extends FullField, O extends string> {
   /**
    * The {@link QueryManager} driving this query builder. All query mutations go through it.
    */
-  manager: QueryManager<RuleGroupTypeAny, F, FullOperator, FullCombinator>;
+  manager: QueryManager<RuleGroupTypeAny, FullField, FullOperator, FullCombinator>;
   fields: FullOptionList<F>;
   fieldMap: Partial<Record<GetOptionIdentifierType<F>, F>>;
   classNames: Classnames;
