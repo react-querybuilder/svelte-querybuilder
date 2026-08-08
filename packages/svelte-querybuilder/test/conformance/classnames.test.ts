@@ -1,22 +1,20 @@
 /**
  * Full DOM parity: the verbatim `class` attribute of every element with one, in document order,
- * for all 49 scenario × query pairs.
+ * for all 50 scenario × query pairs.
  *
  * ## Pre-flush extraction
  *
  * The fixtures were produced with `renderToStaticMarkup`, so no React effect has run. The Svelte
  * port has one effect that can change rendered output — the value-editor reset from step 3 — so
- * the conformance assertion extracts immediately after `render()`, before awaiting `tick()`, and
- * a separate test asserts that the surface is *stable* across a flush. If the reset ever does
- * change a class post-flush, that second test is where it surfaces, as a documented divergence
- * rather than a conformance failure.
+ * the conformance assertion extracts immediately after `render()`, before awaiting `tick()`.
+ * The post-flush surface is a separate, upstream-recorded layer; see
+ * `classnames-post-flush.test.ts`.
  */
 
 import { cleanup } from '@testing-library/svelte';
-import { tick } from 'svelte';
 import { afterEach, describe, expect, it } from 'vitest';
 import { loadFixture, renderAndExtract, renderPairs } from './cases';
-import { extract, type ClassNameEntry } from './extract';
+import type { ClassNameEntry } from './extract';
 import { scenarios } from './scenarios';
 
 interface ClassNamesFixture {
@@ -58,19 +56,4 @@ describe('conformance: classnames', () => {
       expect(classNames).toEqual(expected.classNames);
     });
   }
-
-  describe('post-flush stability', () => {
-    for (const [i, pair] of renderPairs.entries()) {
-      const expected = fixture.cases[i];
-
-      it(`${expected.scenario} × ${expected.query}`, async () => {
-        const { container, classNames } = renderAndExtract(pair);
-        expect(classNames).toEqual(expected.classNames);
-
-        await tick();
-
-        expect(extract(container).classNames).toEqual(classNames);
-      });
-    }
-  });
 });

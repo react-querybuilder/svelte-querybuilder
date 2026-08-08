@@ -75,14 +75,14 @@
 
   /**
    * The props forwarded to the selector component: everything except the props this component
-   * consumes itself.
+   * consumes itself. `testID` is excluded deliberately (upstream destructures it out) so the
+   * bound-pair selectors carry no `data-testid`; the single-selector branch passes it back in.
    */
   const propsForValueSelector = $derived({
     path: props.path,
     level: props.level,
     context: props.context,
     validation: props.validation,
-    testID: props.testID,
     schema: props.schema,
     field: props.field,
     fieldData: props.fieldData,
@@ -108,12 +108,14 @@
           type={inputTypeCoerced}
           placeholder={placeholderText}
           value={valueAsArray[i] ?? ''}
+          title={props.title}
           class={valueListItemClassName}
           disabled={props.disabled}
           oninput={e => multiValueHandler(e.currentTarget.value, i)} />
       {:else}
         <SelectorComponent
           {...propsForValueSelector}
+          title={props.title}
           className={valueListItemClassName}
           handleOnChange={v => multiValueHandler(v, i)}
           disabled={props.disabled}

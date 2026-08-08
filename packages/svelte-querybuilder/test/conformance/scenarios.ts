@@ -7,7 +7,8 @@
  * `classnames.test.ts` guards the rest against drift.
  */
 
-import type { QueryBuilderProps } from '../../src/lib/types';
+import { createRawSnippet } from 'svelte';
+import type { Field, Option, QueryBuilderProps } from '../../src/lib/types';
 import type { QueryFixtureName } from './queries';
 
 /**
@@ -18,6 +19,25 @@ export const fields: { name: string; label: string }[] = Array.from({ length: 9 
   name: `f${i + 1}`,
   label: `Field ${i + 1}`,
 }));
+
+/** Option lists for the multi-value fields. Stable `name`/`label` pairs keep the fixture legible. */
+const mvValues: Option[] = [
+  { name: 's1', label: 'S1' },
+  { name: 's2', label: 'S2' },
+  { name: 's3', label: 'S3' },
+];
+
+/**
+ * Fields for the `multiValue` scenario. Prefixed `mv` so `f1`..`f9` — and therefore every
+ * pre-existing case — stay untouched.
+ */
+export const multiValueFields: Field[] = [
+  { name: 'mvText', label: 'MV Text' },
+  { name: 'mvNum', label: 'MV Number', inputType: 'number' },
+  { name: 'mvSelect', label: 'MV Select', valueEditorType: 'select', values: mvValues },
+  { name: 'mvMulti', label: 'MV Multiselect', valueEditorType: 'multiselect', values: mvValues },
+  { name: 'mvRadio', label: 'MV Radio', valueEditorType: 'radio', values: mvValues },
+];
 
 /** Every non-IC fixture. IC fixtures render a materially different tree, so they are separated. */
 const standardQueries: QueryFixtureName[] = [
@@ -58,6 +78,21 @@ export interface Scenario {
   /** An inline query, for scenarios the shared corpus does not cover. */
   query?: unknown;
 }
+
+/**
+ * A separator for bound-pair editors. React Query Builder emits no separator of its own — the slot
+ * is empty by default — so the fixture supplies one, the same way `customized` supplies
+ * `controlClassnames`. The class is deliberately custom-named: it is a fixture artifact, not part
+ * of the core class surface. Svelte idiom: a raw snippet, since `LabelNode` is `Snippet | string`.
+ */
+const separatorSnippet = createRawSnippet(() => ({
+  render: () => '<span class="custom-separator">and</span>',
+}));
+
+// `''` rather than upstream's `null`: `LabelNode` is `Snippet | string`, and the port's own
+// default separator returns `''`. Both render nothing.
+const getValueEditorSeparator = (_field: string, operator: string) =>
+  operator === 'between' || operator === 'notBetween' ? separatorSnippet : '';
 
 export const scenarios: Scenario[] = [
   {
@@ -159,6 +194,39 @@ export const scenarios: Scenario[] = [
           },
           match: { mode: 'atLeast', threshold: 2 },
         },
+      ],
+    },
+  },
+  {
+    name: 'multiValue',
+    description:
+      'Multi-value editor layouts: `between`/`notBetween` bound pairs (text, number, select), ' +
+      '`in` multiselect, and a radio group. Rules [6] and [7] are the only rules in the entire ' +
+      'fixture set for which `getValueEditorReset` returns `reset: true` — their values ' +
+      'deliberately mismatch their operators. Do not "fix" them. `getValueEditorSeparator` ' +
+      'supplies a `custom-separator` span for the bound pairs; RQB emits no separator by default.',
+    props: {
+      fields: multiValueFields,
+      parseNumbers: true,
+      listsAsArrays: true,
+      getValueEditorSeparator,
+    },
+    // Rules [6] and [7] are the ONLY rules in the entire fixture set for which
+    // `getValueEditorReset` returns `reset: true`. They exist so `classnames-post-flush.json`
+    // pins the value-editor reset effect rather than merely restating the static surface.
+    // Do not "fix" their values to match their operators.
+    query: {
+      id: '[]',
+      combinator: 'and',
+      rules: [
+        { id: '[0]', field: 'mvText', operator: 'between', value: 'a,b' },
+        { id: '[1]', field: 'mvText', operator: 'notBetween', value: ['a', 'b'] },
+        { id: '[2]', field: 'mvNum', operator: 'between', value: '10,20' },
+        { id: '[3]', field: 'mvSelect', operator: 'between', value: 's1,s2' },
+        { id: '[4]', field: 'mvMulti', operator: 'in', value: ['s1', 's2'] },
+        { id: '[5]', field: 'mvRadio', operator: '=', value: 's1' },
+        { id: '[6]', field: 'mvText', operator: '=', value: ['a', 'b'] },
+        { id: '[7]', field: 'mvNum', operator: '=', value: '10,20' },
       ],
     },
   },

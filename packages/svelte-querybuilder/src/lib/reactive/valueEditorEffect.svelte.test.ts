@@ -4,6 +4,16 @@ import type { ValueEditorResetDeps } from './valueEditorEffect.svelte.js';
 import { createValueEditorReset } from './valueEditorEffect.svelte.js';
 
 /**
+ * Cross-implementation anchor: the `multiValue` conformance scenario
+ * (`test/conformance/scenarios.ts`, cases `multiValue × inline` in both `classnames.json` and
+ * `classnames-post-flush.json`) contains the only two rules upstream for which
+ * `getValueEditorReset` returns `reset: true`. Those cases pin the *rendered surface* on both
+ * sides of a flush; the reset's actual behavior is pinned here, because upstream's mount-query-
+ * change effect clobbers the mount-time reset, so no render layer can observe it landing. The
+ * first two tests below (operator change `in`/`between` → `=`) are that substitute assertion.
+ */
+
+/**
  * Installs the effect over a reactive props object and returns both, plus a flush helper.
  */
 const setup = (initial: Omit<ValueEditorResetDeps, 'handleOnChange'>) => {
