@@ -5,8 +5,8 @@
  * ## Pre-flush extraction
  *
  * The fixtures were produced with `renderToStaticMarkup`, so no React effect has run. The Svelte
- * port has one effect that can change rendered output — the value-editor reset from step 3 — so
- * the conformance assertion extracts immediately after `render()`, before awaiting `tick()`.
+ * port has one effect that can change rendered output — the value-editor reset — so the
+ * conformance assertion extracts immediately after `render()`, before awaiting `tick()`.
  * The post-flush surface is a separate, upstream-recorded layer; see
  * `classnames-post-flush.test.ts`.
  */

@@ -16,7 +16,7 @@ Svelte 5 port of [React Query Builder](https://react-querybuilder.js.org). Bun w
 - **Logic layer**: `@react-querybuilder/core` (npm dependency) - query manipulation, parsers, formatters, defaults, i18n strings. **Not vendored.** Re-exported from the barrel so consumers never need a direct core dependency.
 - **Examples**: `examples/*` (workspace glob; may be empty)
 
-The repo is in early development. Nothing published yet.
+See `CHANGELOG.md` for release history.
 
 ### Relationship to RQB core
 
