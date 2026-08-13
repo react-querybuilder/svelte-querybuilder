@@ -98,22 +98,20 @@ Context carries configuration — `controlElements`, `controlClassnames`, `trans
   import { setQueryBuilderContext } from 'svelte-querybuilder';
   import MyValueEditor from './MyValueEditor.svelte';
 
-  setQueryBuilderContext({
+  // `setQueryBuilderContext` takes a *getter*, not a value.
+  setQueryBuilderContext(() => ({
     controlElements: { valueEditor: MyValueEditor },
     translations: { addRule: { label: 'Add' } },
     showNotToggle: true,
-  });
+  }));
 </script>
 ```
 
-Context is set once, during component initialization. If any value has to stay reactive, pass an object of getters rather than a plain snapshot:
+Context is set once, during component initialization, so the argument is a getter rather than a value. Descendants call it from inside their own derivations, which is what keeps reactive values live:
 
 ```svelte
-setQueryBuilderContext({
-  get showNotToggle() {
-    return showNotToggle;
-  },
-});
+let showNotToggle = $state(true); // Read inside the getter, so descendants see every change.
+setQueryBuilderContext(() => ({showNotToggle}));
 ```
 
 Props always win over context, per key.
@@ -166,8 +164,10 @@ Hold the query yourself and bind it. There is no `manager` prop — query state 
 
   let query = $state({ combinator: 'and', rules: [] });
 
-  // Core's pure query tools are re-exported from the barrel.
-  const addRule = () => (query = add(query, { field: 'firstName', operator: '=', value: '' }, []));
+  // Core's pure query tools are re-exported from the barrel. `freeze: false` because immer's
+  // deep freeze throws on the Svelte `$state` proxies the query is made of.
+  const addRule = () =>
+    (query = add(query, { field: 'firstName', operator: '=', value: '' }, [], { freeze: false }));
 </script>
 
 <button onclick={addRule}>Add rule</button>

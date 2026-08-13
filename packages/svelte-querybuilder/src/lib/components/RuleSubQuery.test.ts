@@ -105,6 +105,36 @@ describe('RuleSubQuery', () => {
     expect(onQueryChange.mock.lastCall![0].rules[0].value).toMatchObject({ combinator: 'and' });
   });
 
+  it('preserves a populated subquery that has no id', () => {
+    const onQueryChange = vi.fn();
+    render(QueryBuilder, {
+      props: {
+        fields,
+        defaultQuery: {
+          combinator: 'and',
+          rules: [
+            {
+              id: 'r1',
+              field: 'tags',
+              operator: '=',
+              match: { mode: 'all' },
+              value: { combinator: 'or', rules: [{ field: 'name', operator: '=', value: 'x' }] },
+            },
+          ],
+        } satisfies RuleGroupType,
+        onQueryChange,
+      },
+    });
+
+    // The id-less group is prepared, not replaced: its rules survive and get ids.
+    const value = onQueryChange.mock.lastCall![0].rules[0].value;
+    expect(value.combinator).toBe('or');
+    expect(value.rules).toHaveLength(1);
+    expect(value.rules[0]).toMatchObject({ field: 'name', operator: '=', value: 'x' });
+    expect(value.rules[0].id).toBeDefined();
+    expect(screen.getAllByTestId(TestID.rule)).toHaveLength(2);
+  });
+
   it('disables the subquery along with the rule', () => {
     render(QueryBuilder, { props: { fields, defaultQuery: query, disabled: true } });
 

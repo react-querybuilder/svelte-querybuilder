@@ -62,8 +62,13 @@ const eligible = fixture.cases.filter(
 const valueSources: ValueSourceFullOptions = [{ name: 'value', value: 'value', label: 'Value' }];
 
 const propsFor = (options: RunOptions): Partial<QueryBuilderProps> => ({
-  ...(options.queryDisabled ? { disabled: true } : {}),
-  ...(options.disabledPaths ? { disabled: options.disabledPaths } : {}),
+  // Core checks `queryDisabled` before `disabledPaths`, so the whole-query flag wins when a case
+  // sets both. Spreading both would silently let `disabledPaths` overwrite `disabled: true`.
+  ...(options.queryDisabled
+    ? { disabled: true }
+    : options.disabledPaths
+      ? { disabled: options.disabledPaths }
+      : {}),
   ...(options.maxLevels === undefined ? {} : { maxLevels: options.maxLevels }),
   // The prop-level equivalents of `replay.ts`'s `updateResolvers`.
   getDefaultOperator: '=',

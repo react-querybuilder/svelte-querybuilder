@@ -41,13 +41,13 @@
     }).optionList
   );
 
-  // The rule's `value` is the subquery. Until it is a prepared group, leave `query` undefined
-  // and let the subquery seed itself: a seeded query is emitted once during initialization,
-  // which writes it back through `onChangeValue`.
+  // The rule's `value` is the subquery. Anything but a group leaves `query` undefined and lets
+  // the subquery seed itself; a seeded query is emitted once during initialization, which writes
+  // it back through `onChangeValue`. A group without an `id` is passed through all the same —
+  // query-state initialization prepares it and emits the normalized result, so its existing
+  // rules survive.
   const subQuery = $derived(
-    isRuleGroup(props.rule.value) && props.rule.value.id
-      ? (props.rule.value as RuleGroupType)
-      : undefined
+    isRuleGroup(props.rule.value) ? (props.rule.value as RuleGroupType) : undefined
   );
 
   const subQueryProps = $derived({
