@@ -9,6 +9,7 @@ export default defineConfig({
     globals: true,
     include: ['src/**/*.{test,spec}.ts'],
     setupFiles: ['./vitest-setup.ts'],
+    testTimeout: 30_000,
     coverage: {
       provider: 'v8',
       include: ['src/lib/**'],
