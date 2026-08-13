@@ -37,16 +37,17 @@ Requires Svelte 5.25 or later. `@react-querybuilder/core` comes along as a depen
 
 ## Driving the query
 
-Four options, in increasing order of control:
+Three options, in increasing order of control:
 
 | Approach                  | Use when                                                                |
 | ------------------------- | ----------------------------------------------------------------------- |
 | `defaultQuery`            | Uncontrolled — the component owns the query.                            |
 | `bind:query`              | The common case. Two-way binding via `$bindable`.                       |
 | `query` + `onQueryChange` | Fully controlled, e.g. when the query lives in a store or is validated. |
-| `manager`                 | A `QueryManager` you construct and hold, driven from outside the tree.  |
 
-Undo/redo, history, and programmatic mutation all go through a `QueryManager`.
+The `query` prop is an input, not the authority: it wins whenever it changes, and local edits stand in between. Pass a stable reference — rebuilding it on every read (`query={{ ...myQuery }}`) reverts every edit as fast as it is applied.
+
+Undo/redo and history are built in; render the controls with `showUndoRedo`.
 
 ## Styling
 
@@ -78,7 +79,7 @@ Not in v1, and not planned for the near term:
 - UI-framework compatibility packages (Ant Design, Bootstrap, MUI, etc.)
 - `@react-querybuilder/expr` / `@react-querybuilder/datetime` UI integrations
 - Async option lists
-- A Redux store or a `qbId` registry — hold a `QueryManager` instance instead
+- A Redux store or a `qbId` registry — hold the query yourself and use `bind:query`
 - Deprecated props carried over from React Query Builder
 
 ## License

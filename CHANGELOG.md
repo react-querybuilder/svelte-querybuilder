@@ -7,16 +7,26 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+Query state is now owned entirely by Svelte runes. `QueryManager` is gone from this package: core's pure functions (`add`/`remove`/`update`/`move`, `createQueryActions`, `prepareOptionList`, `deriveRuleContext`, `shouldCoalesce`) supply the logic, and the reactive graph lives in `$state`/`$derived`. `createQueryBuilderState` contains no `$effect` at all, and no longer relies on deep-compare, live closures, a config-version counter, subscription mirroring, or try/catch around immer's freeze.
+
+### Removed
+
+- **Breaking:** the `manager` prop and `schema.manager`. External `QueryManager` control was speculative, unused, and the one thing runes cannot own. Hold the query yourself and use `bind:query`, or `query` + `onQueryChange`.
+- **Breaking:** `enableMountQueryChange`. Its behavior is now derived from first principles — see below.
+- `createRuleContext` and `createRuleGroupContext`, along with the `Derived<T>` (`{ readonly current: T }`) wrapper type. `createRuleParts`/`createRuleGroupParts` are the supported path and return getters directly.
+- `createActions`, superseded by core's `createQueryActions`.
+
 ### Changed
 
-- Option lists (fields, combinators, operators, values) are now prepared by the `QueryManager`, which takes `translations` and therefore produces the placeholder options itself when `autoSelectField`/`autoSelectOperator`/`autoSelectValue` is `false`. `createQueryBuilderState` reads the lists back off the manager (`getFields`, `getCombinators`, `getOperators`, `getValues`) instead of running `prepareOptionList` a second time, so the rendered lists and the values the manager assigns to new rules can no longer disagree. The remaining resolver props are forwarded to the manager as-is.
-- Structural options are fully reactive again, and now stay in sync with the manager. Changing `fields`, `operators`, `combinators`, `translations`, `maxLevels`, `disabled`, `validator`, `idGenerator`, or the `autoSelect*` flags after the first render applies them to the existing manager through `QueryManager#reconfigure` (`@react-querybuilder/core` 8.22.3), so the query, the undo/redo history, and every subscriber survive the change. Previously these were captured at construction and could only be changed by recreating the component. There is no opt-out. A `manager` passed through the `manager` prop is never reconfigured.
-- `getDefaultField` is forwarded through a live closure like every other resolver prop, so a changed function prop takes effect without a reconfigure.
-- Minimum `@react-querybuilder/core` is now 8.22.3.
-
-### Fixed
-
-- `onQueryChange` (and the `bind:query` write-back) no longer fires for a configuration-only manager notification, which would previously have re-emitted an unchanged query.
+- **Breaking:** `schema.manager` is replaced by `schema.history` — `canUndo`, `canRedo`, `undo`, `redo`, `clear`. Backed by getters, so reads stay reactive without dependency pokes.
+- **Breaking:** the `skipHook` option is renamed `skipValueReset` on `MatchModeEditor` and the value-editor reset. It suppresses the value reset, which is what the name now says.
+- **Breaking:** `shiftActions` and `undoRedoActions` no longer receive the `actionElement` bulk control override, despite the plural suffix. Bulk classification now uses core's explicit `controlKind` map instead of matching on key suffixes, so a control named `somethingSelector` can no longer silently inherit `valueSelector`.
+- `onQueryChange` fires once during initialization if and only if the initial query was seeded or normalized by the component — no query supplied, or one supplied without `id`s. A query handed over ready to use never triggers it. This is what `enableMountQueryChange` used to control, minus the flag.
+- The `query` prop is documented as an input rather than the authority: it wins whenever it changes, and local edits stand in between. Note that a `query` prop rebuilt as a fresh object on every read is indistinguishable from a deliberate change and will revert every edit; pass a stable reference.
+- Option lists are `$derived(prepareOptionList(...))` rather than read back off a manager, and structural options (`fields`, `operators`, `combinators`, `translations`, `maxLevels`, `disabled`, `validator`, `idGenerator`, the `autoSelect*` flags) are re-derived from props instead of pushed into a mutable instance via `reconfigure`. Changing them mid-session still preserves the query and the undo/redo history.
+- Undo/redo history is two `$state.raw` stacks with coalescing delegated to core's `shouldCoalesce`, so the coalescing rule cannot drift from core's.
+- `QueryBuilder` publishes context as `setQueryBuilderContext(() => state.context)` rather than an `Object.defineProperty` reflection loop, so the key set is no longer snapshotted at initialization. `getQueryBuilderContext` returns a getter.
+- Minimum `@react-querybuilder/core` is now 8.23.0, for the query-tool `freeze` opt-out (deep-freezing a Svelte `$state` proxy throws), `shouldCoalesce`, `controlKeys`/`controlKind`, and `DefaultFieldProp`/`DefaultOperatorProp`.
 
 ## [0.1.1] - 2026-08-05
 

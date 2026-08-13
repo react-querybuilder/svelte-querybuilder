@@ -12,7 +12,7 @@ export interface ValueEditorResetDeps {
   type?: string;
   inputType?: InputType | null;
   /** Set when an ancestor component has already applied the reset. */
-  skipHook?: boolean;
+  skipValueReset?: boolean;
   /** Applies the reset. */
   // oxlint-disable-next-line typescript/no-explicit-any
   handleOnChange: (value: any) => void;
@@ -39,10 +39,11 @@ export interface ValueEditorResetDeps {
 export const createValueEditorReset = (getDeps: () => ValueEditorResetDeps): void => {
   $effect(() => {
     // Read every dependency up front so tracking is stable across branches.
-    const { operator, value, type, inputType, skipHook, handleOnChange } = getDeps();
+    const { operator, value, type, inputType, skipValueReset, handleOnChange } = getDeps();
 
     const { reset, value: nextValue } = getValueEditorReset({
-      skipHook,
+      // Core's option is still named for React's hook.
+      skipHook: skipValueReset,
       type: type ?? undefined,
       operator,
       value,

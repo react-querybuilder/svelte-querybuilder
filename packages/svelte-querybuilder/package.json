@@ -62,7 +62,7 @@
     "svelte": "^5.25"
   },
   "dependencies": {
-    "@react-querybuilder/core": "^8.22.3"
+    "@react-querybuilder/core": "https://pkg.pr.new/react-querybuilder/react-querybuilder/@react-querybuilder/core@3d5d992"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",

@@ -1,5 +1,5 @@
 import type { RuleGroupType } from '@react-querybuilder/core';
-import { QueryManager, standardClassnames as sc, TestID } from '@react-querybuilder/core';
+import { standardClassnames as sc, TestID } from '@react-querybuilder/core';
 import { render, screen } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -55,21 +55,6 @@ describe('UndoRedoActions', () => {
 
     await userEvent.click(screen.getByTestId(TestID.redoAction));
     expect(onQueryChange.mock.lastCall![0].rules).toHaveLength(2);
-  });
-
-  it('drives an externally-held manager', async () => {
-    // An external manager brings its own options: history is opt-in there, unlike the manager
-    // the query builder creates for itself.
-    const manager = new QueryManager<RuleGroupType>(query, { history: true });
-    render(QueryBuilder, { props: { fields, manager, showUndoRedo: true } });
-
-    manager.add({ field: 'f1', operator: '=', value: 'v2' }, []);
-    expect(manager.getQuery().rules).toHaveLength(2);
-
-    await userEvent.click(screen.getByTestId(TestID.undoAction));
-
-    expect(manager.getQuery().rules).toHaveLength(1);
-    expect(screen.getAllByTestId(TestID.rule)).toHaveLength(1);
   });
 
   it('is disabled along with the query', () => {

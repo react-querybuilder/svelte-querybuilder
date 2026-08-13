@@ -2,15 +2,14 @@
   @component
   The query builder.
 
-  Port of React Query Builder's `QueryBuilder`/`QueryBuilderInternal`. All state lives in a
-  `QueryManager` (see `createQueryBuilderState`).
+  Port of React Query Builder's `QueryBuilder`/`QueryBuilderInternal`. All state lives in runes
+  (see `createQueryBuilderState`).
 
   The query can be driven three ways:
 
   - `bind:query` — two-way binding.
   - `query` + `onQueryChange` — controlled.
-  - `defaultQuery` — uncontrolled.
-  - a `manager` prop — driven from outside the component tree entirely.
+  - `defaultQuery`, or nothing at all — uncontrolled.
 -->
 <script
   lang="ts"
@@ -40,16 +39,9 @@
   });
 
   // `state.context` is a `$derived`, so it is re-created on every config change. Context is set
-  // once, at initialization, hence the getter indirection: descendants read through to the
-  // current value instead of capturing the first one.
-  const contextValue = {} as Record<string, unknown>;
-  for (const key of Object.keys(state.context)) {
-    Object.defineProperty(contextValue, key, {
-      enumerable: true,
-      get: () => (state.context as Record<string, unknown>)[key],
-    });
-  }
-  setQueryBuilderContext(contextValue as never);
+  // once, at initialization, so what goes in is a getter rather than the value: descendants read
+  // through to the current value instead of capturing the first one.
+  setQueryBuilderContext(() => state.context);
 
   const RuleGroupControlElement = $derived(state.schema.controls.ruleGroup);
 </script>

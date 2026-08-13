@@ -70,7 +70,7 @@
   level={0} />
 {#if requiresThreshold(props.match.mode)}
   <NumericEditorComponent
-    skipHook
+    skipValueReset
     testID={props.testID}
     inputType="number"
     title={props.title}

@@ -24,27 +24,14 @@ Element structure, document order, class names, `data-testid`s, and `data-path` 
 
 React Query Builder v8 keeps query state in a Redux store, addressed by a `qbId` registry, and exposes `dispatchQuery`/`useQueryBuilderQuery` for external access.
 
-This package has no store and no registry. All state lives in a `QueryManager` instance owned by the component. To drive the query from outside the component tree, construct one yourself and pass it in:
-
-```svelte
-<script lang="ts">
-  import { QueryBuilder, QueryManager } from 'svelte-querybuilder';
-
-  const manager = new QueryManager({ combinator: 'and', rules: [] }, { fields, history: true });
-
-  const clear = () => manager.setQuery({ combinator: 'and', rules: [] });
-</script>
-
-<QueryBuilder {fields} {manager} />
-<button onclick={clear}>Clear</button>
-<button onclick={() => manager.undo()} disabled={!manager.canUndo()}>Undo</button>
-```
+This package has no store, no registry, and no `QueryManager`. Query state is a Svelte rune owned by the component; the query itself is manipulated with the same pure functions React Query Builder uses (`add`, `remove`, `update`, `move`), re-exported from this package's barrel.
 
 Consequences:
 
 - No `qbId` prop, no `dispatchQuery`, no `useQueryBuilderQuery` equivalent.
 - No `preserveQueryStateOnUnmount` — there is no store to preserve state in.
-- Undo/redo needs no separate entry point. React splits it into `react-querybuilder/history`; here the component's manager is always constructed with history enabled, and `showUndoRedo` renders the controls.
+- No `manager` prop and no `schema.manager`. To drive the query from outside the component tree, hold it yourself and use `bind:query`, or pass `query` + `onQueryChange`.
+- Undo/redo needs no separate entry point. React splits it into `react-querybuilder/history`; here history is always on and `showUndoRedo` renders the controls. `schema.history` exposes `canUndo`, `canRedo`, `undo`, `redo`, and `clear`.
 
 ## Query binding
 
@@ -55,6 +42,16 @@ React accepts `query` + `onQueryChange` (controlled) or `defaultQuery` (uncontro
 ```
 
 Controlled mode compares the incoming query structurally, not just by reference, because a parent holding the query in `$state` hands back a reactive proxy that is never reference-equal to the object the query builder emitted.
+
+The `query` prop is an _input_, not the authority: it wins whenever it **changes**, and local edits stand in between. That covers every driving mode — a controlled consumer updates the prop from `onQueryChange`, an uncontrolled one never passes it at all, and `bind:query` does both.
+
+> [!WARNING]
+> Do not rebuild the `query` prop as a fresh object on every read. An expression like
+> `query={structuredClone(myQuery)}` or `query={{ ...myQuery }}` produces a new, structurally
+> stale object each time the prop is read, which is indistinguishable from a prop the consumer
+> deliberately changed. It wins every time, reverting each edit as fast as it is applied — the
+> builder will appear frozen. Pass a stable reference and reassign it only when the query
+> actually changes.
 
 ## Customization
 
@@ -92,7 +89,7 @@ React has no equivalent; `controlElements` is its only component-level customiza
 
 - `ReactNode` → `LabelNode` (`Snippet | string`).
 - `ComponentType<P>` → Svelte's `Component<P>`.
-- `Schema` drops `dispatchQuery` and `qbId`, and gains `manager: QueryManager`.
+- `Schema` drops `dispatchQuery` and `qbId`, and gains `history` (`canUndo`/`canRedo`/`undo`/`redo`/`clear`).
 - `QueryBuilderProps` has defaults for all four type parameters (`RuleGroupType`, `FullField`, `FullOperator`, `FullCombinator`), so bare `QueryBuilderProps` is valid. React requires all four.
 - `ActionProps.handleOnClick` and `ShiftActionsProps.shiftUp`/`shiftDown` take a DOM `MouseEvent`, not React's synthetic `MouseEvent`.
 - `Controls['undoRedoActions']` is non-nullable. React keeps it nullable because no implementation ships in the base package.
@@ -104,4 +101,6 @@ React's hooks have no direct equivalents, and the `useMemo` graphs in `Rule`/`Ru
 
 ## Known behavioral note
 
-Structural manager options — `fields`, `operators`, `combinators`, `translations`, `maxLevels`, `disabled`, and the boolean flags — are applied to the existing `QueryManager` in place via `QueryManager#reconfigure` whenever the corresponding prop changes. The query, the undo/redo history, and any subscribers survive, so changing `fields` mid-session updates both the rendered selectors and the defaults the manager assigns to newly created rules without losing state. A config-only change does not fire `onQueryChange`. A `manager` supplied through the `manager` prop is never reconfigured — that instance belongs to the caller.
+Structural options — `fields`, `operators`, `combinators`, `translations`, `maxLevels`, `disabled`, and the boolean flags — are derived from props, so changing one mid-session updates both the rendered selectors and the defaults assigned to newly created rules without touching the query or the undo/redo history. A config-only change does not fire `onQueryChange`.
+
+`onQueryChange` fires once during initialization if and only if the initial query was **seeded or normalized** by the component — that is, no query was supplied, or one was supplied without `id`s and had to be prepared. A query handed over ready to use never triggers it. This replaces React's `enableMountQueryChange` flag, which no longer exists.

@@ -22,7 +22,6 @@ import type {
   Path,
   QueryActions,
   QueryBuilderFlags,
-  QueryManager,
   QueryValidator,
   RuleGroupType,
   RuleGroupTypeAny,
@@ -343,10 +342,10 @@ export interface ValueEditorProps<F extends FullField = FullField, O extends str
   separator?: LabelNode;
   selectorComponent?: Component<ValueSelectorProps>;
   /**
-   * Only pass `true` if the value editor reset effect has already run in a
-   * parent/ancestor component.
+   * Set when an ancestor component has already applied the value reset, so this editor must not
+   * apply it a second time. (`skipHook` in React Query Builder — there is no hook here.)
    */
-  skipHook?: boolean;
+  skipValueReset?: boolean;
   schema: Schema<F, O>;
 }
 
@@ -395,9 +394,11 @@ export interface RuleProps<
 /**
  * Props passed down through context from a query builder context provider.
  *
- * `enableDragAndDrop` and `preserveQueryStateOnUnmount` are omitted from
- * {@link QueryBuilderFlags}: drag-and-drop is a non-goal, and there is no store whose state
- * could be preserved.
+ * `enableDragAndDrop`, `preserveQueryStateOnUnmount`, and `enableMountQueryChange` are omitted
+ * from {@link QueryBuilderFlags}: drag-and-drop is a non-goal, there is no store whose state
+ * could be preserved, and the mount-time notification is derived rather than configured — a
+ * query that was created or normalized here is emitted once, and one supplied ready to use
+ * never is.
  *
  * @group Props
  */
@@ -406,7 +407,10 @@ export interface QueryBuilderContextProps<
   O extends string = string,
 >
   extends
-    Omit<QueryBuilderFlags, 'enableDragAndDrop' | 'preserveQueryStateOnUnmount'>,
+    Omit<
+      QueryBuilderFlags,
+      'enableDragAndDrop' | 'preserveQueryStateOnUnmount' | 'enableMountQueryChange'
+    >,
     ControlSnippets<F, O> {
   /**
    * Defines replacement components.
@@ -447,12 +451,6 @@ export type QueryBuilderProps<
   C extends FullCombinator = FullCombinator,
 > = RG extends RuleGroupType<infer R> | RuleGroupTypeIC<infer R>
   ? QueryBuilderContextProps<F, GetOptionIdentifierType<O>> & {
-      /**
-       * An externally-created {@link QueryManager} to drive this query builder. When provided,
-       * the query builder subscribes to it instead of creating its own manager, which allows
-       * the query to be manipulated from outside the component tree.
-       */
-      manager?: QueryManager<RG, F, O, C>;
       /**
        * Initial query object for uncontrolled components.
        */

@@ -85,11 +85,11 @@ describe('createValueEditorReset', () => {
     cleanup();
   });
 
-  it('does nothing when skipHook is true', () => {
+  it('does nothing when skipValueReset is true', () => {
     const { props, handleOnChange, flush, cleanup } = setup({
       operator: 'in',
       value: ['a', 'b'],
-      skipHook: true,
+      skipValueReset: true,
     });
 
     props.operator = '=';

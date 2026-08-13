@@ -158,18 +158,23 @@ Replacing `rule` or `ruleGroup` wholesale is a larger job, because those compone
 
 ## Driving the query from outside
 
-To manipulate the query from outside the component tree, construct a `QueryManager` and pass it in:
+Hold the query yourself and bind it. There is no `manager` prop — query state is a rune owned by the component, and `bind:query` is the supported way in and out:
 
 ```svelte
 <script lang="ts">
-  import { QueryBuilder, QueryManager } from 'svelte-querybuilder';
+  import { QueryBuilder, add } from 'svelte-querybuilder';
 
-  const manager = new QueryManager({ combinator: 'and', rules: [] }, { history: true });
+  let query = $state({ combinator: 'and', rules: [] });
+
+  // Core's pure query tools are re-exported from the barrel.
+  const addRule = () => (query = add(query, { field: 'firstName', operator: '=', value: '' }, []));
 </script>
 
-<button onclick={() => manager.undo()}>Undo</button>
-<QueryBuilder {fields} {manager} />
+<button onclick={addRule}>Add rule</button>
+<QueryBuilder {fields} bind:query />
 ```
+
+Undo/redo is internal to the component; render its controls with `showUndoRedo` rather than driving it from outside.
 
 ## Classnames
 

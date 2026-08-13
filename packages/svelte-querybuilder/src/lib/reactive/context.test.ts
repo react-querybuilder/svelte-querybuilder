@@ -52,10 +52,14 @@ describe('mergeControlElements', () => {
       { addRuleAction: C, fieldSelector: C, valueEditor: C, notToggle: C }
     );
     expect(controls.addRuleAction).toBe(A);
-    expect(controls.shiftActions).toBe(A);
+    expect(controls.cloneRuleAction).toBe(A);
     expect(controls.fieldSelector).toBe(B);
     expect(controls.combinatorSelector).toBe(B);
-    // Bulk overrides never apply to these.
+    // Bulk overrides never apply to these. `shiftActions`/`undoRedoActions` are composite
+    // controls despite the plural suffix, which is why classification comes from core's
+    // `controlKind` map rather than from the shape of the key.
+    expect(controls.shiftActions).toBeUndefined();
+    expect(controls.undoRedoActions).toBeUndefined();
     expect(controls.valueEditor).toBe(C);
     expect(controls.notToggle).toBe(C);
   });
