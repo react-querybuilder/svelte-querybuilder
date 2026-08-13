@@ -5,7 +5,7 @@
   Port of React Query Builder's `ValueEditor`. The reset effect lives in
   `createValueEditorReset` (the one piece with a timing hazard); the rest is derived here.
 -->
-<script lang="ts">
+<script lang="ts" generics="F extends FullField = FullField, O extends string = string">
   import type { FullField } from '@react-querybuilder/core';
   import {
     coerceBigIntValue,
@@ -22,7 +22,7 @@
   import { createValueEditorReset } from '../reactive/valueEditorEffect.svelte.js';
   import type { ValueEditorProps, ValueSelectorProps } from '../types/props.js';
 
-  const props: ValueEditorProps<FullField, string> = $props();
+  const props: ValueEditorProps<F, O> = $props();
 
   /** Stable prefix for `radio` input ids, so each `<label for>` association is unique. */
   const uid = $props.id();

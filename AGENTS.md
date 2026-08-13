@@ -97,9 +97,18 @@ Runes only. No Svelte 4 idioms — no `export let`, no `$:`, no stores for compo
 - `{#snippet}` / `{@render}` for slot-like customization: each control is a top-level snippet prop, with the `controls` object as the escape hatch for passing components. Snippets and components are indistinguishable at runtime, so a snippet used as a control is wrapped as `{ snippet }` (see `internal/Control.svelte`) — never invoke a compiled component or snippet by hand
 - `setContext`/`getContext` for cross-tree config instead of prop drilling — but context is set once at init, so pass a getter or a `$state` object if the value must stay reactive
 
+#### Destructuring `$props()`
+
+Two conventions, and the choice is not stylistic:
+
+- **Leaf controls destructure**: `const { value, handleOnChange }: ValueSelectorProps = $props();`. They read their props during render, so the destructured snapshot is what the template already tracks.
+- **Forwarding components don't**: `const props: RuleProps = $props();`, then `props.schema` at the point of use. Destructuring reads every prop eagerly, at init; components that hand props onward (or build getter-backed prop bags — see `internal/lazyProps.ts`) must read them late so each downstream consumer subscribes only to what it actually touches.
+
+Don't name a local `props` in a component that also destructures `$props()` — svelte2tsx generates a conflicting binding and `svelte-check` fails with "`$props` used before its declaration." Name it for what it holds (`ruleProps`).
+
 ### TypeScript
 
-- Generics with constraints, mirroring RQB's `RG extends RuleGroupTypeAny`, `F extends FullField`, etc.
+- Generics with constraints, mirroring RQB's `RG extends RuleGroupTypeAny`, `F extends FullField`, etc. `F` is always the _field object_ type — including in `RuleProps`, where RQB parameterizes by field _name_ instead. Use `GetOptionIdentifierType<F>` for the name.
 - Always `import type` for type-only imports
 - Re-export core types from the barrel rather than redefining them
 

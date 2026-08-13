@@ -46,7 +46,7 @@ import type { LabelNode, Translations, TranslationWithLabel } from './translatio
  * @group Props
  */
 export interface CommonSubComponentProps<
-  F extends FullOption = FullField,
+  F extends FullField = FullField,
   O extends string = string,
 > {
   /**
@@ -97,7 +97,7 @@ export interface CommonSubComponentProps<
  * @group Props
  */
 export interface SelectorOrEditorProps<
-  F extends FullOption = FullField,
+  F extends FullField = FullField,
   O extends string = string,
 > extends CommonSubComponentProps<F, O> {
   value?: string;
@@ -369,10 +369,13 @@ interface CommonRuleAndGroupProps<F extends FullField = FullField, O extends str
 /**
  * `RuleGroup` props.
  *
+ * `F` is the *field object* type, not the field name — the same convention as every other props
+ * interface in this package. Use `GetOptionIdentifierType<F>` to get at the name.
+ *
  * @group Props
  */
 export interface RuleGroupProps<
-  F extends FullOption = FullOption,
+  F extends FullField = FullField,
   O extends string = string,
 > extends CommonRuleAndGroupProps<F, O> {
   ruleGroup: RuleGroupTypeAny<RuleType<GetOptionIdentifierType<F>, O>>;
@@ -381,13 +384,16 @@ export interface RuleGroupProps<
 /**
  * `Rule` props.
  *
+ * `F` is the *field object* type, not the field name (which is RQB's convention for this one
+ * interface). See {@link RuleGroupProps}.
+ *
  * @group Props
  */
 export interface RuleProps<
-  F extends string = string,
+  F extends FullField = FullField,
   O extends string = string,
-> extends CommonRuleAndGroupProps<FullOption<F>, O> {
-  rule: RuleType<F, O>;
+> extends CommonRuleAndGroupProps<F, O> {
+  rule: RuleType<GetOptionIdentifierType<F>, O>;
 }
 
 /**

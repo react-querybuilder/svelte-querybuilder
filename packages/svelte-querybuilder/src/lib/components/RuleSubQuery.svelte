@@ -77,4 +77,7 @@
   const subGroupParts = createRuleGroupParts(() => subGroupProps);
 </script>
 
-<RuleComponents {props} {parts} subQueryProps={subGroupProps} subQueryParts={subGroupParts} />
+<RuleComponents
+  mode="subQuery"
+  rule={{ props, parts }}
+  subQuery={{ props: subGroupProps, parts: subGroupParts }} />

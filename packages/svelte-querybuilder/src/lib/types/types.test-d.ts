@@ -95,6 +95,14 @@ assertType<Translations>(ruleProps.translations);
 declare const ruleGroupProps: RuleGroupProps;
 // @ts-expect-error use `ruleGroup.combinator`
 assertType<unknown>(ruleGroupProps.combinator);
+
+// `F` is the field *object* type in both, not the field name (which is RQB's convention for
+// `RuleProps`). The name comes from `GetOptionIdentifierType<F>`.
+declare const narrowRuleProps: RuleProps<FullField<'f1' | 'f2'>, 'op'>;
+assertType<'f1' | 'f2'>(narrowRuleProps.rule.field);
+assertType<'op'>(narrowRuleProps.rule.operator);
+declare const narrowRuleGroupProps: RuleGroupProps<FullField<'f1' | 'f2'>, 'op'>;
+assertType<Schema<FullField<'f1' | 'f2'>, 'op'>>(narrowRuleGroupProps.schema);
 // #endregion
 
 // #region Schema

@@ -5,7 +5,8 @@
   Port of React Query Builder's `Rule`. A thin wrapper around `RuleComponents.svelte`, or around
   `RuleSubQuery.svelte` when the rule's field supports match modes.
 -->
-<script lang="ts" generics="F extends string = string, O extends string = string">
+<script lang="ts" generics="F extends FullField = FullField, O extends string = string">
+  import type { FullField } from '@react-querybuilder/core';
   import { TestID } from '@react-querybuilder/core';
   import { createRuleParts } from '../reactive/ruleParts.svelte.js';
   import type { RuleProps } from '../types/props.js';
@@ -26,6 +27,6 @@
   {#if parts.hasSubQuery}
     <RuleSubQuery {props} {parts} />
   {:else}
-    <RuleComponents {props} {parts} />
+    <RuleComponents mode="rule" rule={{ props, parts }} />
   {/if}
 </div>
