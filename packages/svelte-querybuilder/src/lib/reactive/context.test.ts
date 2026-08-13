@@ -28,22 +28,23 @@ describe('getQueryBuilderContext', () => {
 describe('mergeControls', () => {
   it('prefers props over context over defaults', () => {
     expect(
-      mergeControls({ notToggle: A }, {}, { notToggle: B }, { notToggle: C, rule: C }).notToggle
+      mergeControls({ notToggle: A }, {}, { notToggle: B }, {}, { notToggle: C, rule: C }).notToggle
     ).toBe(A);
-    expect(mergeControls({}, {}, { notToggle: B }, { notToggle: C }).notToggle).toBe(B);
-    expect(mergeControls({}, {}, {}, { notToggle: C }).notToggle).toBe(C);
+    expect(mergeControls({}, {}, { notToggle: B }, {}, { notToggle: C }).notToggle).toBe(B);
+    expect(mergeControls({}, {}, {}, {}, { notToggle: C }).notToggle).toBe(C);
   });
 
   it('treats null as an explicit "render nothing" that stops the search', () => {
     expect(
-      mergeControls({ notToggle: null }, {}, { notToggle: B }, { notToggle: C }).notToggle
+      mergeControls({ notToggle: null }, {}, { notToggle: B }, {}, { notToggle: C }).notToggle
     ).toBeNull();
-    expect(mergeControls({}, {}, { notToggle: null }, { notToggle: C }).notToggle).toBeNull();
+    expect(mergeControls({}, {}, { notToggle: null }, {}, { notToggle: C }).notToggle).toBeNull();
   });
 
   it('applies actionElement and valueSelector as bulk overrides', () => {
     const controls = mergeControls(
       { actionElement: A, valueSelector: B },
+      {},
       {},
       {},
       { addRuleAction: C, fieldSelector: C, valueEditor: C, notToggle: C }
@@ -61,36 +62,65 @@ describe('mergeControls', () => {
     expect(controls.notToggle).toBe(C);
   });
 
+  it('applies bulk entries at the defaults level too', () => {
+    const controls = mergeControls({}, {}, {}, {}, { actionElement: C });
+    expect(controls.addRuleAction).toBe(C);
+    expect(controls.shiftActions).toBeNull();
+  });
+
   it('prefers a specific prop over a bulk override from context', () => {
-    const controls = mergeControls({ addRuleAction: A }, {}, { actionElement: B }, {});
+    const controls = mergeControls({ addRuleAction: A }, {}, { actionElement: B }, {}, {});
     expect(controls.addRuleAction).toBe(A);
     expect(controls.addGroupAction).toBe(B);
   });
 
   it('prefers a snippet over a component at the same level', () => {
-    const controls = mergeControls({ notToggle: A }, { notToggle: snippetA }, {}, { notToggle: C });
+    const controls = mergeControls(
+      { notToggle: A },
+      { notToggle: snippetA },
+      {},
+      {},
+      { notToggle: C }
+    );
     expect(controls.notToggle).toEqual({ snippet: snippetA });
   });
 
   it('prefers a component from props over a component from context', () => {
-    expect(mergeControls({ notToggle: A }, {}, { notToggle: B }, {}).notToggle).toBe(A);
+    expect(mergeControls({ notToggle: A }, {}, { notToggle: B }, {}, {}).notToggle).toBe(A);
   });
 
   it('prefers a snippet from props over a default', () => {
-    expect(mergeControls({}, { notToggle: snippetA }, {}, { notToggle: C }).notToggle).toEqual({
+    expect(mergeControls({}, { notToggle: snippetA }, {}, {}, { notToggle: C }).notToggle).toEqual({
       snippet: snippetA,
     });
   });
 
-  it('honors a null entry even when a snippet is inherited from context', () => {
-    // Snippets only exist at the props level, so a context-level null is not shadowed by one.
-    expect(mergeControls({}, {}, { notToggle: null }, { notToggle: C }).notToggle).toBeNull();
+  it('applies a snippet supplied at the context level', () => {
+    expect(mergeControls({}, {}, {}, { notToggle: snippetA }, { notToggle: C }).notToggle).toEqual({
+      snippet: snippetA,
+    });
+    // Props still win.
+    expect(
+      mergeControls({}, { notToggle: snippetB }, {}, { notToggle: snippetA }, {}).notToggle
+    ).toEqual({ snippet: snippetB });
+  });
+
+  it('prefers a context snippet over a context null entry', () => {
+    expect(
+      mergeControls({}, {}, { notToggle: null }, { notToggle: snippetA }, { notToggle: C })
+        .notToggle
+    ).toEqual({ snippet: snippetA });
+  });
+
+  it('honors a null entry from context over a default', () => {
+    expect(mergeControls({}, {}, { notToggle: null }, {}, { notToggle: C }).notToggle).toBeNull();
   });
 
   it('applies bulk snippets as overrides', () => {
     const controls = mergeControls(
       { addRuleAction: A },
       { actionElement: snippetA, valueSelector: snippetB },
+      {},
       {},
       { valueEditor: C }
     );
@@ -103,7 +133,7 @@ describe('mergeControls', () => {
   });
 
   it('resolves every key, unresolved ones to null', () => {
-    const controls = mergeControls({}, {}, {}, {});
+    const controls = mergeControls({}, {}, {}, {}, {});
     expect('notToggle' in controls).toBe(true);
     expect(controls.notToggle).toBeNull();
     // Controls that only exist upstream are never included.

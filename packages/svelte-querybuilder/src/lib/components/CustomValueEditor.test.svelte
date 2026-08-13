@@ -12,4 +12,5 @@
 <input
   data-testid="custom-component-value-editor"
   value={props.value}
+  disabled={props.disabled}
   oninput={e => props.handleOnChange(e.currentTarget.value)} />

@@ -68,7 +68,13 @@ assertType<Control<UndoRedoActionsProps> | null>(controls.undoRedoActions);
 assertType<Control<ValueEditorProps<FullField, string>> | null>(controls.valueEditor);
 // A control is a component or a wrapped snippet, never a bare snippet: the two are
 // indistinguishable at runtime.
-assertType<Component<ActionProps>>(controls.actionElement as Component<ActionProps>);
+declare const actionComponent: Component<ActionProps>;
+declare const actionSnippet: Snippet<[ActionProps]>;
+assertType<ControlsProp<FullField, string>['actionElement']>(actionComponent);
+assertType<ControlsProp<FullField, string>['actionElement']>({ snippet: actionSnippet });
+assertType<ControlsProp<FullField, string>['actionElement']>(null);
+// @ts-expect-error a bare snippet is not a control
+assertType<ControlsProp<FullField, string>['actionElement']>(actionSnippet);
 // @ts-expect-error a bare snippet is not a control
 assertType<Controls<FullField, string>['notToggle']>(undefined as unknown as Snippet<[never]>);
 

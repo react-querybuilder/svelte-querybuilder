@@ -29,6 +29,7 @@
       data-testid={props.testID}
       class={props.className}
       title={props.title}
+      disabled={props.disabled}
       onclick={props.handleOnClick}>＋ {props.label}</button>
   {/snippet}
 </QueryBuilder>

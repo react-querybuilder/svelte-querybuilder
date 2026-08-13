@@ -84,7 +84,7 @@ A snippet can go in `controls` too, wrapped in `{ snippet }`, for configuration 
 
 ### Bulk overrides
 
-`actionElement` replaces every button-type control at once (`addRuleAction`, `removeGroupAction`, `shiftActions`, …), and `valueSelector` replaces every `<select>`-type control (`fieldSelector`, `operatorSelector`, `combinatorSelector`, `valueSourceSelector`). Both work as a snippet prop or a `controls` entry. Neither applies to `valueEditor`, `rule`, `ruleGroup`, `inlineCombinator`, `notToggle`, or `matchModeEditor`.
+`actionElement` replaces every button-type control at once (`addRuleAction`, `removeGroupAction`, `cloneRuleAction`, …), and `valueSelector` replaces every `<select>`-type control (`fieldSelector`, `operatorSelector`, `combinatorSelector`, `valueSourceSelector`). Both work as a snippet prop or a `controls` entry. Neither applies to `valueEditor`, `rule`, `ruleGroup`, `inlineCombinator`, `notToggle`, or `matchModeEditor`.
 
 Which controls are "actions" and which are "selectors" comes from core's `controlKind` map, not from the shape of the name — `shiftActions` and `undoRedoActions` are composites and are not bulk-action targets despite the plural suffix.
 

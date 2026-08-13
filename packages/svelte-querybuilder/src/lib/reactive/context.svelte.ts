@@ -74,10 +74,14 @@ const unimplementedControlKeys = [
 ] as const satisfies readonly Exclude<ControlKey, SvelteControlKey>[];
 
 /** Fails to compile if core adds a control key this package neither implements nor excludes. */
-type _AllControlKeysAccountedFor =
+type AllControlKeysAccountedFor =
   Exclude<ControlKey, SvelteControlKey | (typeof unimplementedControlKeys)[number]> extends never
     ? true
     : never;
+
+// The annotation is what makes the guard bite: `never` is not assignable from `true`.
+const allControlKeysAccountedFor: AllControlKeysAccountedFor = true;
+void allControlKeysAccountedFor;
 
 const unimplemented = new Set<string>(unimplementedControlKeys);
 
@@ -95,7 +99,8 @@ const bulkKeyFor = (key: SvelteControlKey): 'actionElement' | 'valueSelector' | 
  *
  * Within a single level the order is: top-level snippet, `controls` entry, bulk snippet, bulk
  * `controls` entry. Levels are then tried in order — props, context, defaults — so a snippet
- * passed to `QueryBuilder` beats a component inherited from context, and vice versa.
+ * passed to `QueryBuilder` beats a component inherited from context, and vice versa. The
+ * defaults level carries no snippets, but bulk entries in it still apply.
  *
  * `null` is a value, not an absence: it resolves to "render nothing" and stops the search.
  *
@@ -111,6 +116,7 @@ export const mergeControls = <F extends FullField, O extends string>(
   propsControls: ControlsProp<F, O> = emptyObject,
   propsSnippets: ControlSnippetProps<F, O> = emptyObject,
   contextControls: ControlsProp<F, O> = emptyObject,
+  contextSnippets: ControlSnippetProps<F, O> = emptyObject,
   defaults: Partial<Controls<F, O>> = emptyObject
 ): Controls<F, O> => {
   const merged: Record<string, unknown> = {};
@@ -125,9 +131,9 @@ export const mergeControls = <F extends FullField, O extends string>(
 
   const levels: [ControlMap, SnippetMap][] = [
     [propsControls as ControlMap, propsSnippets as SnippetMap],
-    [contextControls as ControlMap, emptyObject],
+    [contextControls as ControlMap, contextSnippets as SnippetMap],
+    [defaults as ControlMap, emptyObject],
   ];
-  const defaultsMap = defaults as ControlMap;
 
   for (const key of controlKeys) {
     if (unimplemented.has(key)) continue;
@@ -161,7 +167,7 @@ export const mergeControls = <F extends FullField, O extends string>(
       }
     }
 
-    merged[k] = (control === undefined ? defaultsMap[k] : control) ?? null;
+    merged[k] = control ?? null;
   }
 
   return merged as Controls<F, O>;
@@ -215,7 +221,7 @@ export const mergeQueryBuilderConfig = <F extends FullField, O extends string>({
     enableDragAndDrop: false,
     debugMode: preferProp(false, props.debugMode, context?.debugMode),
     classNames: mergeClassnames(context?.controlClassnames, props.controlClassnames),
-    controls: mergeControls(props.controls, props, context?.controls, defaultControls),
+    controls: mergeControls(props.controls, props, context?.controls, context, defaultControls),
     translations: mergeTranslations(props.translations, context?.translations),
   };
 };

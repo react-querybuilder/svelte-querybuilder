@@ -32,7 +32,7 @@ Control elements are now composed the Svelte way. Each of the 24 control names i
 - **Breaking:** control elements are typed `Control<P> = Component<P> | { snippet: Snippet<[P]> }`, or `null`. Snippets and components are both plain functions at runtime with no reliable way to tell them apart, so a snippet used as a control carries a wrapper object; the top-level snippet props wrap automatically. `ControlElementsProp` is now `ControlsProp`, and `ControlPropsMap` is the single source of truth for control names and their prop types.
 - **Breaking:** `Controls` entries are uniformly nullable — including `actionElement`, `valueSelector`, `rule`, and `ruleGroup` — with `null` meaning "render nothing". Every key is always present after resolution.
 - **Breaking:** `selectorComponent`, `numericEditorComponent`, and `InlineCombinatorProps.component` accept a `Control`, so a `valueSelector` supplied as a snippet applies inside `ValueEditor` and `MatchModeEditor` too.
-- **Breaking:** `mergeControlElements` is now `mergeControls(controls, snippets, contextControls, defaults)`.
+- **Breaking:** `mergeControlElements` is now `mergeControls(controls, snippets, contextControls, contextSnippets, defaults)`.
 - A query builder publishes its _resolved_ controls through context, so a nested (subquery) builder inherits what the outer one resolved and overrides it per key with its own props.
 - **Breaking:** `schema.manager` is replaced by `schema.history` — `canUndo`, `canRedo`, `undo`, `redo`, `clear`. Backed by getters, so reads stay reactive without dependency pokes.
 - **Breaking:** the `skipHook` option is renamed `skipValueReset` on `MatchModeEditor` and the value-editor reset. It suppresses the value reset, which is what the name now says.
