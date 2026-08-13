@@ -8,6 +8,7 @@
 -->
 <script lang="ts">
   import { isRuleGroup } from '@react-querybuilder/core';
+  import Control from '../internal/Control.svelte';
   import type { RuleGroupParts } from '../reactive/ruleGroupParts.svelte.js';
   import type { RuleGroupProps } from '../types/props.js';
 
@@ -20,10 +21,20 @@
   const ruleGroup = $derived(parts.ruleGroup);
 
   const controls = $derived(schema.controls);
-  const CombinatorSelectorControlElement = $derived(controls.combinatorSelector);
-  const InlineCombinatorControlElement = $derived(controls.inlineCombinator);
-  const RuleGroupControlElement = $derived(controls.ruleGroup);
-  const RuleControlElement = $derived(controls.rule);
+
+  /** Props shared by both inline-combinator renderings. */
+  const inlineCommon = $derived({
+    options: schema.combinators,
+    title: translations.combinators.title,
+    className: classNames.combinators,
+    rules: ruleGroup.rules,
+    level: path.length,
+    context: props.context,
+    validation: parts.validationResult,
+    component: controls.combinatorSelector,
+    schema,
+    ruleGroup,
+  });
 </script>
 
 {#each ruleGroup.rules as r, idx (typeof r === 'string' ? [...parts.pathsMemo[idx].path, r].join('-') : r.id)}
@@ -33,65 +44,59 @@
   {@const shiftUpDisabled = path.length === 0 && idx === 0}
   {@const shiftDownDisabled = path.length === 0 && idx === ruleGroup.rules.length - 1}
   {#if idx > 0 && !schema.independentCombinators && schema.showCombinatorsBetweenRules}
-    <InlineCombinatorControlElement
-      options={schema.combinators}
-      value={parts.combinator}
-      title={translations.combinators.title}
-      className={classNames.combinators}
-      handleOnChange={parts.onCombinatorChange}
-      rules={ruleGroup.rules}
-      level={path.length}
-      context={props.context}
-      validation={parts.validationResult}
-      component={CombinatorSelectorControlElement}
-      path={thisPath}
-      disabled={parts.disabled}
-      {schema}
-      {ruleGroup} />
+    <Control
+      control={controls.inlineCombinator}
+      props={{
+        ...inlineCommon,
+        value: parts.combinator,
+        handleOnChange: parts.onCombinatorChange,
+        path: thisPath,
+        disabled: parts.disabled,
+      }} />
   {/if}
   {#if typeof r === 'string'}
-    <InlineCombinatorControlElement
-      options={schema.combinators}
-      value={r}
-      title={translations.combinators.title}
-      className={classNames.combinators}
-      handleOnChange={val => parts.onIndependentCombinatorChange(val, idx)}
-      rules={ruleGroup.rules}
-      level={path.length}
-      context={props.context}
-      validation={parts.validationResult}
-      component={CombinatorSelectorControlElement}
-      path={thisPath}
-      disabled={thisPathDisabled}
-      {schema}
-      {ruleGroup} />
+    <Control
+      control={controls.inlineCombinator}
+      props={{
+        ...inlineCommon,
+        value: r,
+        handleOnChange: (val: string) => parts.onIndependentCombinatorChange(val, idx),
+        path: thisPath,
+        disabled: thisPathDisabled,
+      }} />
   {:else if isRuleGroup(r)}
-    <RuleGroupControlElement
-      id={r.id}
-      {schema}
-      actions={props.actions}
-      path={thisPath}
-      {translations}
-      ruleGroup={r}
-      disabled={thisPathDisabled}
-      parentDisabled={props.parentDisabled || parts.disabled}
-      parentMuted={props.parentMuted || parts.muted}
-      {shiftUpDisabled}
-      {shiftDownDisabled}
-      context={props.context} />
+    <Control
+      control={controls.ruleGroup}
+      props={{
+        id: r.id,
+        schema,
+        actions: props.actions,
+        path: thisPath,
+        translations,
+        ruleGroup: r,
+        disabled: thisPathDisabled,
+        parentDisabled: props.parentDisabled || parts.disabled,
+        parentMuted: props.parentMuted || parts.muted,
+        shiftUpDisabled,
+        shiftDownDisabled,
+        context: props.context,
+      }} />
   {:else}
-    <RuleControlElement
-      id={r.id}
-      rule={r}
-      {schema}
-      actions={props.actions}
-      path={thisPath}
-      disabled={thisPathDisabled}
-      parentDisabled={props.parentDisabled || parts.disabled}
-      parentMuted={props.parentMuted || parts.muted}
-      {translations}
-      {shiftUpDisabled}
-      {shiftDownDisabled}
-      context={props.context} />
+    <Control
+      control={controls.rule}
+      props={{
+        id: r.id,
+        rule: r,
+        schema,
+        actions: props.actions,
+        path: thisPath,
+        disabled: thisPathDisabled,
+        parentDisabled: props.parentDisabled || parts.disabled,
+        parentMuted: props.parentMuted || parts.muted,
+        translations,
+        shiftUpDisabled,
+        shiftDownDisabled,
+        context: props.context,
+      }} />
   {/if}
 {/each}

@@ -1,5 +1,6 @@
 import type {
   Classnames,
+  ControlKey,
   FullField,
   QueryBuilderFlags,
   ValidationMap,
@@ -13,10 +14,15 @@ import {
   preferFlagProps,
   preferProp,
 } from '@react-querybuilder/core';
-import type { Component, Snippet } from 'svelte';
+import type { Snippet } from 'svelte';
 import { getContext, setContext } from 'svelte';
-import { snippetToComponent } from '../internal/snippetToComponent.js';
-import type { ControlElementsProp, Controls, ControlSnippets } from '../types/controls.js';
+import type {
+  Control,
+  Controls,
+  ControlSnippetProps,
+  ControlsProp,
+  SvelteControlKey,
+} from '../types/controls.js';
 import type { QueryBuilderContextProps } from '../types/props.js';
 import type { Translations, TranslationsFull } from '../types/translations.js';
 
@@ -27,16 +33,6 @@ import type { Translations, TranslationsFull } from '../types/translations.js';
 const contextKey: unique symbol = Symbol('svelte-querybuilder');
 
 const emptyObject = {} as const;
-
-/**
- * A component that renders nothing. Used in place of a `null` entry in the `controlElements`
- * prop, so every key of {@link Controls} is always a renderable component.
- *
- * Works in both client and server modes: Svelte calls a component function with
- * `(anchor|payload, props)` and only reads the returned object for its exports.
- */
-// oxlint-disable-next-line typescript/no-explicit-any
-export const nullComponent = ((): Record<string, never> => ({})) as unknown as Component<any>;
 
 /**
  * Config inherited through Svelte context.
@@ -67,85 +63,105 @@ export const getQueryBuilderContext = <
 };
 
 /**
- * The wrapped component for a named snippet prop, or `undefined` if that prop is absent.
+ * Controls that exist in core's key list but not in this package: drag-and-drop is a non-goal,
+ * and group header/body contents are customized with a snippet or a replacement `ruleGroup`
+ * rather than through their own control elements.
  */
-const snippetFor = <F extends FullField, O extends string>(
-  source: ControlSnippets<F, O>,
-  snippetKey: string
-  // oxlint-disable-next-line typescript/no-explicit-any
-): Component<any> | undefined => {
-  const snippet = (source as Record<string, Snippet<[never]> | undefined>)[snippetKey];
-  return snippet ? snippetToComponent(snippet as Snippet<[Record<string, unknown>]>) : undefined;
-};
+const unimplementedControlKeys = [
+  'dragHandle',
+  'ruleGroupBodyElements',
+  'ruleGroupHeaderElements',
+] as const satisfies readonly Exclude<ControlKey, SvelteControlKey>[];
+
+/** Fails to compile if core adds a control key this package neither implements nor excludes. */
+type _AllControlKeysAccountedFor =
+  Exclude<ControlKey, SvelteControlKey | (typeof unimplementedControlKeys)[number]> extends never
+    ? true
+    : never;
+
+const unimplemented = new Set<string>(unimplementedControlKeys);
+
+/** The control this one falls back to in bulk, or `undefined` if it has no bulk default. */
+const bulkKeyFor = (key: SvelteControlKey): 'actionElement' | 'valueSelector' | undefined =>
+  controlKind[key] === 'action'
+    ? 'actionElement'
+    : controlKind[key] === 'selector'
+      ? 'valueSelector'
+      : undefined;
 
 /**
- * Merges `controlElements` and snippet props from props, context, and defaults, giving
+ * Merges control elements from props, inherited context, and package defaults, giving
  * precedence to props.
  *
- * Mirrors `useMergedContext`: a `null` entry resolves to {@link nullComponent} (rendering
- * nothing), `actionElement` is a bulk override for every control core classifies as an
- * `"action"`, and `valueSelector` for every `"selector"`. Which control is which comes from
- * core's {@link controlKind} map rather than from the shape of the key's name, so a future
- * control named e.g. `pathSelector` cannot silently inherit `valueSelector`. Note that
- * `shiftActions` and `undoRedoActions` are *not* action targets despite the plural suffix.
+ * Within a single level the order is: top-level snippet, `controls` entry, bulk snippet, bulk
+ * `controls` entry. Levels are then tried in order — props, context, defaults — so a snippet
+ * passed to `QueryBuilder` beats a component inherited from context, and vice versa.
  *
- * Snippets are the Svelte-native customization point and are resolved first. Within a level the
- * order is: keyed snippet, keyed component, bulk snippet, bulk component. Levels are then tried
- * in order—props, context, defaults—so a snippet passed to `QueryBuilder` beats a component
- * inherited from context, and vice versa.
+ * `null` is a value, not an absence: it resolves to "render nothing" and stops the search.
+ *
+ * Which control is an "action" or a "selector" comes from core's {@link controlKind} map rather
+ * than from the shape of the key's name, so a future control named e.g. `pathSelector` cannot
+ * silently inherit `valueSelector`. Note that `shiftActions` and `undoRedoActions` are *not*
+ * action targets despite the plural suffix.
+ *
+ * The context level arrives already resolved (see `createQueryBuilderState`), so for a nested
+ * query builder `defaults` is only reached for keys the outer builder left unset.
  */
-export const mergeControlElements = <F extends FullField, O extends string>(
-  propsCE: ControlElementsProp<F, O> = emptyObject,
-  contextCE: ControlElementsProp<F, O> = emptyObject,
-  defaults: Partial<Controls<F, O>> = emptyObject,
-  propsSnippets: ControlSnippets<F, O> = emptyObject,
-  contextSnippets: ControlSnippets<F, O> = emptyObject
+export const mergeControls = <F extends FullField, O extends string>(
+  propsControls: ControlsProp<F, O> = emptyObject,
+  propsSnippets: ControlSnippetProps<F, O> = emptyObject,
+  contextControls: ControlsProp<F, O> = emptyObject,
+  defaults: Partial<Controls<F, O>> = emptyObject
 ): Controls<F, O> => {
   const merged: Record<string, unknown> = {};
 
+  // The maps are keyed by control name with a per-key prop type; the merge is uniform across
+  // keys, so it works through erased views of them.
+  // oxlint-disable-next-line typescript/no-explicit-any
+  type AnyControl = Control<any> | null;
+  type ControlMap = Record<string, AnyControl | undefined>;
+  // oxlint-disable-next-line typescript/no-explicit-any
+  type SnippetMap = Record<string, Snippet<[any]> | undefined>;
+
+  const levels: [ControlMap, SnippetMap][] = [
+    [propsControls as ControlMap, propsSnippets as SnippetMap],
+    [contextControls as ControlMap, emptyObject],
+  ];
+  const defaultsMap = defaults as ControlMap;
+
   for (const key of controlKeys) {
-    /**
-     * Resolves one level (props or context) to a component, `nullComponent`, or `undefined`
-     * meaning "fall through to the next level".
-     */
-    const resolveLevel = (
-      ce: ControlElementsProp<F, O>,
-      sn: ControlSnippets<F, O>
-      // oxlint-disable-next-line typescript/no-explicit-any
-    ): Component<any> | undefined => {
-      const keyed = snippetFor(sn, `${key}Snippet`);
-      if (keyed) return keyed;
+    if (unimplemented.has(key)) continue;
 
-      // Core's `controlKeys` covers three controls this package does not implement
-      // (`dragHandle`, `ruleGroupBodyElements`, `ruleGroupHeaderElements`); they simply never
-      // resolve to anything.
-      const comp = ce[key as keyof ControlElementsProp<F, O>];
-      if (comp === null) return nullComponent;
-      if (comp) return comp;
+    const k = key as SvelteControlKey;
+    const bulkKey = bulkKeyFor(k);
 
-      const kind = controlKind[key];
+    // `??` is deliberately not used to chain these: `null` is an explicit "render nothing" that
+    // must stop the search, while `undefined` means the level said nothing.
+    let control: AnyControl | undefined;
 
-      const bulkSnippet =
-        kind === 'action'
-          ? snippetFor(sn, 'actionElementSnippet')
-          : kind === 'selector'
-            ? snippetFor(sn, 'valueSelectorSnippet')
-            : undefined;
-      if (bulkSnippet) return bulkSnippet;
+    for (const [ce, sn] of levels) {
+      const keyedSnippet = sn[k];
+      if (keyedSnippet) {
+        control = { snippet: keyedSnippet };
+        break;
+      }
+      if (ce[k] !== undefined) {
+        control = ce[k];
+        break;
+      }
+      if (!bulkKey) continue;
+      const bulkSnippet = sn[bulkKey];
+      if (bulkSnippet) {
+        control = { snippet: bulkSnippet };
+        break;
+      }
+      if (ce[bulkKey] !== undefined) {
+        control = ce[bulkKey];
+        break;
+      }
+    }
 
-      return kind === 'action'
-        ? ce.actionElement
-        : kind === 'selector'
-          ? ce.valueSelector
-          : undefined;
-    };
-
-    const comp =
-      resolveLevel(propsCE, propsSnippets) ??
-      resolveLevel(contextCE, contextSnippets) ??
-      defaults[key as keyof Controls<F, O>];
-
-    if (comp) merged[key] = comp;
+    merged[k] = (control === undefined ? defaultsMap[k] : control) ?? null;
   }
 
   return merged as Controls<F, O>;
@@ -199,13 +215,7 @@ export const mergeQueryBuilderConfig = <F extends FullField, O extends string>({
     enableDragAndDrop: false,
     debugMode: preferProp(false, props.debugMode, context?.debugMode),
     classNames: mergeClassnames(context?.controlClassnames, props.controlClassnames),
-    controls: mergeControlElements(
-      props.controlElements,
-      context?.controlElements,
-      defaultControls,
-      props,
-      context
-    ),
+    controls: mergeControls(props.controls, props, context?.controls, defaultControls),
     translations: mergeTranslations(props.translations, context?.translations),
   };
 };

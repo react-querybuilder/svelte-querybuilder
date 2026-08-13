@@ -13,7 +13,7 @@ Element structure, document order, class names, `data-testid`s, and `data-path` 
 | Feature                                                       | Status                                                                                                                                                                                                                 |
 | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Drag-and-drop (`@react-querybuilder/dnd`)                     | Non-goal. `enableDragAndDrop` is not accepted; the root always renders `data-dnd="disabled"`.                                                                                                                          |
-| UI-framework packages (Ant Design, Bootstrap, MUI, Chakra, …) | Non-goal. Use `controlElements` to supply your own components.                                                                                                                                                         |
+| UI-framework packages (Ant Design, Bootstrap, MUI, Chakra, …) | Non-goal. Use `controls` or a control snippet to supply your own components.                                                                                                                                           |
 | `@react-querybuilder/expr`, `@react-querybuilder/datetime` UI | Non-goal for v1.                                                                                                                                                                                                       |
 | `useAsyncOptionList` / async option lists                     | Non-goal for v1. Resolve options before passing them as `fields`.                                                                                                                                                      |
 | Deprecated props and their fallbacks                          | Dropped. `RuleGroupProps.combinator`/`rules`/`not` and `RuleProps.field`/`operator`/`value`/`valueSource` are not read; use `ruleGroup`/`rule`. Deprecated type aliases (`ActionWithRulesProps` and friends) are gone. |
@@ -55,15 +55,23 @@ The `query` prop is an _input_, not the authority: it wins whenever it **changes
 
 ## Customization
 
-`controlElements` works as it does in React, with Svelte components instead of React ones:
+RQB's `controlElements` object is replaced by two channels, both keyed by the same control names:
 
 ```svelte
-<QueryBuilder {fields} bind:query controlElements={{ valueEditor: MyValueEditor }} />
+<!-- A snippet, on a top-level prop -->
+<QueryBuilder {fields} bind:query>
+  {#snippet valueEditor(props)}
+    <MyInput value={props.value} oninput={e => props.handleOnChange(e.currentTarget.value)} />
+  {/snippet}
+</QueryBuilder>
+
+<!-- A component, in the `controls` object -->
+<QueryBuilder {fields} bind:query controls={{ valueEditor: MyValueEditor }} />
 ```
 
-Passing `null` for a control renders nothing, same as React.
+`{#snippet}` only becomes a prop when the name is top-level, which is why the control names are hoisted out of the object. Snippets and components are indistinguishable at runtime, which is why each channel is typed for one kind; a snippet can still go in `controls` wrapped as `{ snippet }`. `null` renders nothing, same as React. Top-level snippets take precedence over `controls`.
 
-Snippets are accepted for translatable labels anywhere React accepts a `ReactNode` — the `LabelNode` type is `Snippet | string`:
+Snippets are also accepted for translatable labels anywhere React accepts a `ReactNode` — the `LabelNode` type is `Snippet | string`:
 
 ```svelte
 {#snippet addRuleLabel()}
@@ -73,17 +81,7 @@ Snippets are accepted for translatable labels anywhere React accepts a `ReactNod
 <QueryBuilder {fields} bind:query translations={{ addRule: { label: addRuleLabel } }} />
 ```
 
-Every control element also has a snippet prop — `valueEditorSnippet`, `ruleSnippet`, `actionElementSnippet`, and so on — which takes precedence over the corresponding `controlElements` entry:
-
-```svelte
-{#snippet valueEditorSnippet(props)}
-  <MyInput value={props.value} oninput={e => props.handleOnChange(e.currentTarget.value)} />
-{/snippet}
-
-<QueryBuilder {fields} bind:query {valueEditorSnippet} />
-```
-
-React has no equivalent; `controlElements` is its only component-level customization point. See [customization.md](./customization.md) for the full resolution order.
+See [customization.md](./customization.md) for the full resolution order.
 
 ## Type-level differences
 
@@ -92,8 +90,9 @@ React has no equivalent; `controlElements` is its only component-level customiza
 - `Schema` drops `dispatchQuery` and `qbId`, and gains `history` (`canUndo`/`canRedo`/`undo`/`redo`/`clear`).
 - `QueryBuilderProps` has defaults for all four type parameters (`RuleGroupType`, `FullField`, `FullOperator`, `FullCombinator`), so bare `QueryBuilderProps` is valid. React requires all four.
 - `ActionProps.handleOnClick` and `ShiftActionsProps.shiftUp`/`shiftDown` take a DOM `MouseEvent`, not React's synthetic `MouseEvent`.
-- `Controls['undoRedoActions']` is non-nullable. React keeps it nullable because no implementation ships in the base package.
-- `ControlSnippets` has no React counterpart: for every key `x` of `ControlElementsProp` there is an `xSnippet` prop taking `Snippet<[props]>`.
+- `Controls` entries are uniformly nullable, `null` meaning "render nothing". Unlike React, `undoRedoActions` has a default implementation, so it is never unset.
+- `ControlElementsProp` → `ControlsProp` (the `controls` prop), plus `ControlSnippetProps`, which has no React counterpart: one top-level `Snippet<[props]>` prop per control name.
+- A resolved control is `Control<P> = Component<P> | { snippet: Snippet<[P]> }`, or `null` for "render nothing"; `ControlPropsMap` is the single source of truth for control names and their props.
 
 ## Reactivity
 

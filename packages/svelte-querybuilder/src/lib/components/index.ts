@@ -1,7 +1,7 @@
 /**
  * Default components.
  *
- * Every one of these can be replaced through the `controlElements` prop or the query builder
+ * Every one of these can be replaced with a snippet prop, the `controls` prop, or the query builder
  * context; see `Controls`.
  */
 

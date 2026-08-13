@@ -8,11 +8,10 @@
 -->
 <script lang="ts">
   import { clsx, standardClassnames, TestID } from '@react-querybuilder/core';
+  import Control from '../internal/Control.svelte';
   import type { CombinatorSelectorProps, InlineCombinatorProps } from '../types/props.js';
 
   const { component, ...props }: InlineCombinatorProps = $props();
-
-  const CombinatorSelectorComponent = $derived(component);
 
   const className = $derived(
     clsx(
@@ -25,5 +24,5 @@
 </script>
 
 <div class={className} data-testid={TestID.inlineCombinator}>
-  <CombinatorSelectorComponent {...selectorProps} testID={TestID.combinators} />
+  <Control control={component} props={{ ...selectorProps, testID: TestID.combinators }} />
 </div>

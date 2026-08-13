@@ -8,6 +8,7 @@
 <script lang="ts">
   import type { FullField, MatchMode, Path, RuleType } from '@react-querybuilder/core';
   import { lc, parseNumber } from '@react-querybuilder/core';
+  import Control from '../internal/Control.svelte';
   import type { MatchModeEditorProps } from '../types/props.js';
   import type { Schema } from '../types/schema.js';
 
@@ -18,12 +19,8 @@
 
   const props: MatchModeEditorProps = $props();
 
-  const SelectorComponent = $derived(
-    props.selectorComponent ?? props.schema.controls.valueSelector
-  );
-  const NumericEditorComponent = $derived(
-    props.numericEditorComponent ?? props.schema.controls.valueEditor
-  );
+  const valueSelector = $derived(props.selectorComponent ?? props.schema.controls.valueSelector);
+  const numericEditor = $derived(props.numericEditorComponent ?? props.schema.controls.valueEditor);
 
   const thresholdNum = $derived(
     typeof props.match.threshold === 'number' ? Math.max(0, props.match.threshold) : 1
@@ -55,35 +52,41 @@
   };
 </script>
 
-<SelectorComponent
-  schema={props.schema}
-  testID={props.testID}
-  className={props.className}
-  title={props.title}
-  handleOnChange={handleChangeMode}
-  disabled={props.disabled}
-  value={props.match.mode}
-  options={props.options}
-  multiple={false}
-  listsAsArrays={false}
-  path={dummyPath}
-  level={0} />
+<Control
+  control={valueSelector}
+  props={{
+    schema: props.schema,
+    testID: props.testID,
+    className: props.className,
+    title: props.title,
+    handleOnChange: handleChangeMode,
+    disabled: props.disabled,
+    value: props.match.mode,
+    options: props.options,
+    multiple: false,
+    listsAsArrays: false,
+    path: dummyPath,
+    level: 0,
+  }} />
 {#if requiresThreshold(props.match.mode)}
-  <NumericEditorComponent
-    skipValueReset
-    testID={props.testID}
-    inputType="number"
-    title={props.title}
-    className={props.className}
-    disabled={props.disabled}
-    handleOnChange={handleChangeThreshold}
-    field=""
-    operator=""
-    value={thresholdNum}
-    valueSource="value"
-    fieldData={thresholdFieldData}
-    schema={thresholdSchema}
-    path={dummyPath}
-    level={0}
-    rule={thresholdRule} />
+  <Control
+    control={numericEditor}
+    props={{
+      skipValueReset: true,
+      testID: props.testID,
+      inputType: 'number',
+      title: props.title,
+      className: props.className,
+      disabled: props.disabled,
+      handleOnChange: handleChangeThreshold,
+      field: '',
+      operator: '',
+      value: thresholdNum,
+      valueSource: 'value',
+      fieldData: thresholdFieldData,
+      schema: thresholdSchema,
+      path: dummyPath,
+      level: 0,
+      rule: thresholdRule,
+    }} />
 {/if}

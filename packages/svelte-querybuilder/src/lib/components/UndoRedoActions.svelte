@@ -11,12 +11,13 @@
 -->
 <script lang="ts">
   import { TestID } from '@react-querybuilder/core';
+  import Control from '../internal/Control.svelte';
   import type { UndoRedoActionsProps } from '../types/props.js';
 
   const props: UndoRedoActionsProps = $props();
 
   const history = $derived(props.schema.history);
-  const ActionElementControlElement = $derived(props.schema.controls.actionElement);
+  const actionElement = $derived(props.schema.controls.actionElement);
 
   const common = $derived({
     level: props.level,
@@ -29,20 +30,26 @@
 </script>
 
 <div data-testid={props.testID} class={props.className}>
-  <ActionElementControlElement
-    {...common}
-    testID={TestID.undoAction}
-    label={props.labels?.undo}
-    title={props.titles?.undo}
-    className={props.classNames?.undo}
-    handleOnClick={() => history.undo()}
-    disabled={props.disabled || !history.canUndo} />
-  <ActionElementControlElement
-    {...common}
-    testID={TestID.redoAction}
-    label={props.labels?.redo}
-    title={props.titles?.redo}
-    className={props.classNames?.redo}
-    handleOnClick={() => history.redo()}
-    disabled={props.disabled || !history.canRedo} />
+  <Control
+    control={actionElement}
+    props={{
+      ...common,
+      testID: TestID.undoAction,
+      label: props.labels?.undo,
+      title: props.titles?.undo,
+      className: props.classNames?.undo,
+      handleOnClick: () => history.undo(),
+      disabled: props.disabled || !history.canUndo,
+    }} />
+  <Control
+    control={actionElement}
+    props={{
+      ...common,
+      testID: TestID.redoAction,
+      label: props.labels?.redo,
+      title: props.titles?.redo,
+      className: props.classNames?.redo,
+      handleOnClick: () => history.redo(),
+      disabled: props.disabled || !history.canRedo,
+    }} />
 </div>

@@ -15,24 +15,23 @@
   client.
 </p>
 
-<!-- A snippet control element: takes precedence over `controlElements.addRuleAction`. -->
-{#snippet addRuleActionSnippet(props: ActionProps)}
-  <button
-    type="button"
-    data-testid={props.testID}
-    class={props.className}
-    title={props.title}
-    onclick={props.handleOnClick}>＋ {props.label}</button>
-{/snippet}
-
 <QueryBuilder
   {fields}
   bind:query
-  {addRuleActionSnippet}
   showNotToggle
   showCloneButtons
   showLockButtons
-  showShiftActions />
+  showShiftActions>
+  <!-- A control snippet, declared where it is used. -->
+  {#snippet addRuleAction(props: ActionProps)}
+    <button
+      type="button"
+      data-testid={props.testID}
+      class={props.className}
+      title={props.title}
+      onclick={props.handleOnClick}>＋ {props.label}</button>
+  {/snippet}
+</QueryBuilder>
 
 <h2>formatQuery, on the server</h2>
 <pre data-testid="server-sql">{data.sql}</pre>

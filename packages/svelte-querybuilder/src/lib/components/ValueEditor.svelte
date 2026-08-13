@@ -17,6 +17,7 @@
     parseNumber,
     toArray,
   } from '@react-querybuilder/core';
+  import Control from '../internal/Control.svelte';
   import Label from '../internal/Label.svelte';
   import { createValueEditorReset } from '../reactive/valueEditorEffect.svelte.js';
   import type { ValueEditorProps, ValueSelectorProps } from '../types/props.js';
@@ -30,9 +31,7 @@
   const values = $derived(props.values ?? []);
   const placeholderText = $derived(props.fieldData?.placeholder ?? '');
 
-  const SelectorComponent = $derived(
-    props.selectorComponent ?? props.schema.controls.valueSelector
-  );
+  const valueSelector = $derived(props.selectorComponent ?? props.schema.controls.valueSelector);
 
   createValueEditorReset(() => ({
     operator: props.operator,
@@ -113,30 +112,36 @@
           disabled={props.disabled}
           oninput={e => multiValueHandler(e.currentTarget.value, i)} />
       {:else}
-        <SelectorComponent
-          {...propsForValueSelector}
-          title={props.title}
-          className={valueListItemClassName}
-          handleOnChange={v => multiValueHandler(v, i)}
-          disabled={props.disabled}
-          value={valueAsArray[i] ?? getFirstOption(values)}
-          options={values}
-          listsAsArrays={props.listsAsArrays} />
+        <Control
+          control={valueSelector}
+          props={{
+            ...propsForValueSelector,
+            title: props.title,
+            className: valueListItemClassName,
+            handleOnChange: (v: unknown) => multiValueHandler(v, i),
+            disabled: props.disabled,
+            value: valueAsArray[i] ?? getFirstOption(values),
+            options: values,
+            listsAsArrays: props.listsAsArrays,
+          }} />
       {/if}
     {/each}
   </span>
 {:else if type === 'select' || type === 'multiselect'}
-  <SelectorComponent
-    {...propsForValueSelector}
-    testID={props.testID}
-    className={props.className}
-    title={props.title}
-    handleOnChange={props.handleOnChange}
-    disabled={props.disabled}
-    value={props.value}
-    options={values}
-    multiple={type === 'multiselect'}
-    listsAsArrays={props.listsAsArrays} />
+  <Control
+    control={valueSelector}
+    props={{
+      ...propsForValueSelector,
+      testID: props.testID,
+      className: props.className,
+      title: props.title,
+      handleOnChange: props.handleOnChange,
+      disabled: props.disabled,
+      value: props.value,
+      options: values,
+      multiple: type === 'multiselect',
+      listsAsArrays: props.listsAsArrays,
+    }} />
 {:else if type === 'textarea'}
   <textarea
     data-testid={props.testID}

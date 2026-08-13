@@ -94,7 +94,7 @@ Runes only. No Svelte 4 idioms — no `export let`, no `$:`, no stores for compo
 - `$derived` / `$derived.by` instead of `useMemo`. Fine-grained reactivity means manual memoization is almost never needed — don't port React's memoization.
 - `$state` for local mutable state; `$effect` only as a last resort (prefer `$derived`)
 - Callback props (`onQueryChange`), not events
-- `{#snippet}` / `{@render}` for slot-like customization instead of `controlElements` component maps where it reads better; keep an escape hatch for passing custom components
+- `{#snippet}` / `{@render}` for slot-like customization: each control is a top-level snippet prop, with the `controls` object as the escape hatch for passing components. Snippets and components are indistinguishable at runtime, so a snippet used as a control is wrapped as `{ snippet }` (see `internal/Control.svelte`) — never invoke a compiled component or snippet by hand
 - `setContext`/`getContext` for cross-tree config instead of prop drilling — but context is set once at init, so pass a getter or a `$state` object if the value must stay reactive
 
 ### TypeScript

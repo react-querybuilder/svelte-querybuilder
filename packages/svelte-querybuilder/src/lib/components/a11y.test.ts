@@ -29,7 +29,7 @@ const wcagTags = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
  * labels them with `title` alone, and full DOM parity is a locked decision for this port, so
  * adding `aria-label` here would break the conformance harness. It is a best-practice rule, not
  * a WCAG failure—`title` does produce an accessible name, which is why `label`/`aria-*` rules at
- * level A pass. Consumers who need a visible label can supply one through `controlElements` or a
+ * level A pass. Consumers who need a visible label can supply one through `controls` or a
  * snippet.
  *
  * Listed rather than suppressed so that any *other* best-practice regression still fails.
