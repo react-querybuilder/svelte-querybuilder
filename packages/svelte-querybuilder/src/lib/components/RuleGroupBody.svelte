@@ -8,6 +8,8 @@
 -->
 <script lang="ts">
   import { isRuleGroup } from '@react-querybuilder/core';
+  import Control from '../internal/Control.svelte';
+  import { withCommonProps } from '../internal/lazyProps.js';
   import type { RuleGroupParts } from '../reactive/ruleGroupParts.svelte.js';
   import type { RuleGroupProps } from '../types/props.js';
 
@@ -20,10 +22,44 @@
   const ruleGroup = $derived(parts.ruleGroup);
 
   const controls = $derived(schema.controls);
-  const CombinatorSelectorControlElement = $derived(controls.combinatorSelector);
-  const InlineCombinatorControlElement = $derived(controls.inlineCombinator);
-  const RuleGroupControlElement = $derived(controls.ruleGroup);
-  const RuleControlElement = $derived(controls.rule);
+
+  /**
+   * Props shared by both inline-combinator renderings. Getter-backed rather than a `$derived`
+   * object literal — see `withCommonProps`. This matters most here: an eager literal inside the
+   * `{#each}` below makes every child of every rule re-dirty whenever any one of these changes.
+   */
+  const inlineCommon = {
+    get options() {
+      return schema.combinators;
+    },
+    get title() {
+      return translations.combinators.title;
+    },
+    get className() {
+      return classNames.combinators;
+    },
+    get rules() {
+      return ruleGroup.rules;
+    },
+    get level() {
+      return path.length;
+    },
+    get context() {
+      return props.context;
+    },
+    get validation() {
+      return parts.validationResult;
+    },
+    get component() {
+      return controls.combinatorSelector;
+    },
+    get schema() {
+      return schema;
+    },
+    get ruleGroup() {
+      return ruleGroup;
+    },
+  };
 </script>
 
 {#each ruleGroup.rules as r, idx (typeof r === 'string' ? [...parts.pathsMemo[idx].path, r].join('-') : r.id)}
@@ -33,65 +69,119 @@
   {@const shiftUpDisabled = path.length === 0 && idx === 0}
   {@const shiftDownDisabled = path.length === 0 && idx === ruleGroup.rules.length - 1}
   {#if idx > 0 && !schema.independentCombinators && schema.showCombinatorsBetweenRules}
-    <InlineCombinatorControlElement
-      options={schema.combinators}
-      value={parts.combinator}
-      title={translations.combinators.title}
-      className={classNames.combinators}
-      handleOnChange={parts.onCombinatorChange}
-      rules={ruleGroup.rules}
-      level={path.length}
-      context={props.context}
-      validation={parts.validationResult}
-      component={CombinatorSelectorControlElement}
-      path={thisPath}
-      disabled={parts.disabled}
-      {schema}
-      {ruleGroup} />
+    <Control
+      control={controls.inlineCombinator}
+      props={withCommonProps(inlineCommon, {
+        get value() {
+          return parts.combinator;
+        },
+        get handleOnChange() {
+          return parts.onCombinatorChange;
+        },
+        get path() {
+          return thisPath;
+        },
+        get disabled() {
+          return parts.disabled;
+        },
+      })} />
   {/if}
   {#if typeof r === 'string'}
-    <InlineCombinatorControlElement
-      options={schema.combinators}
-      value={r}
-      title={translations.combinators.title}
-      className={classNames.combinators}
-      handleOnChange={val => parts.onIndependentCombinatorChange(val, idx)}
-      rules={ruleGroup.rules}
-      level={path.length}
-      context={props.context}
-      validation={parts.validationResult}
-      component={CombinatorSelectorControlElement}
-      path={thisPath}
-      disabled={thisPathDisabled}
-      {schema}
-      {ruleGroup} />
+    <Control
+      control={controls.inlineCombinator}
+      props={withCommonProps(inlineCommon, {
+        get value() {
+          return r;
+        },
+        handleOnChange: (val: string) => parts.onIndependentCombinatorChange(val, idx),
+        get path() {
+          return thisPath;
+        },
+        get disabled() {
+          return thisPathDisabled;
+        },
+      })} />
   {:else if isRuleGroup(r)}
-    <RuleGroupControlElement
-      id={r.id}
-      {schema}
-      actions={props.actions}
-      path={thisPath}
-      {translations}
-      ruleGroup={r}
-      disabled={thisPathDisabled}
-      parentDisabled={props.parentDisabled || parts.disabled}
-      parentMuted={props.parentMuted || parts.muted}
-      {shiftUpDisabled}
-      {shiftDownDisabled}
-      context={props.context} />
+    <Control
+      control={controls.ruleGroup}
+      props={{
+        get id() {
+          return r.id;
+        },
+        get schema() {
+          return schema;
+        },
+        get actions() {
+          return props.actions;
+        },
+        get path() {
+          return thisPath;
+        },
+        get translations() {
+          return translations;
+        },
+        get ruleGroup() {
+          return r;
+        },
+        get disabled() {
+          return thisPathDisabled;
+        },
+        get parentDisabled() {
+          return props.parentDisabled || parts.disabled;
+        },
+        get parentMuted() {
+          return props.parentMuted || parts.muted;
+        },
+        get shiftUpDisabled() {
+          return shiftUpDisabled;
+        },
+        get shiftDownDisabled() {
+          return shiftDownDisabled;
+        },
+        get context() {
+          return props.context;
+        },
+      }} />
   {:else}
-    <RuleControlElement
-      id={r.id}
-      rule={r}
-      {schema}
-      actions={props.actions}
-      path={thisPath}
-      disabled={thisPathDisabled}
-      parentDisabled={props.parentDisabled || parts.disabled}
-      parentMuted={props.parentMuted || parts.muted}
-      {translations}
-      {shiftUpDisabled}
-      {shiftDownDisabled}
-      context={props.context} />
+    <Control
+      control={controls.rule}
+      props={{
+        get id() {
+          return r.id;
+        },
+        get rule() {
+          return r;
+        },
+        get schema() {
+          return schema;
+        },
+        get actions() {
+          return props.actions;
+        },
+        get path() {
+          return thisPath;
+        },
+        get disabled() {
+          return thisPathDisabled;
+        },
+        get parentDisabled() {
+          return props.parentDisabled || parts.disabled;
+        },
+        get parentMuted() {
+          return props.parentMuted || parts.muted;
+        },
+        get translations() {
+          return translations;
+        },
+        get shiftUpDisabled() {
+          return shiftUpDisabled;
+        },
+        get shiftDownDisabled() {
+          return shiftDownDisabled;
+        },
+        get context() {
+          return props.context;
+        },
+      }} />
   {/if}
 {/each}

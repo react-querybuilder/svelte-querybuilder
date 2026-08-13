@@ -7,6 +7,8 @@
 -->
 <script lang="ts">
   import { TestID } from '@react-querybuilder/core';
+  import Control from '../internal/Control.svelte';
+  import { withCommonProps } from '../internal/lazyProps.js';
   import type { RuleGroupParts } from '../reactive/ruleGroupParts.svelte.js';
   import type { RuleGroupProps } from '../types/props.js';
 
@@ -18,166 +20,302 @@
   const classNames = $derived(parts.classNames);
   const ruleGroup = $derived(parts.ruleGroup);
 
-  const common = $derived({
-    level: path.length,
-    path,
-    disabled: parts.disabled,
-    context: props.context,
-    validation: parts.validationResult,
-    schema,
-  });
-
-  const shiftTitles = $derived(
-    schema.showShiftActions
-      ? {
-          shiftUp: translations.shiftActionUp.title,
-          shiftDown: translations.shiftActionDown.title,
-        }
-      : undefined
-  );
-  const shiftLabels = $derived(
-    schema.showShiftActions
-      ? {
-          shiftUp: translations.shiftActionUp.label,
-          shiftDown: translations.shiftActionDown.label,
-        }
-      : undefined
-  );
-  const undoRedoTitles = $derived(
-    schema.showUndoRedo
-      ? { undo: translations.undo.title, redo: translations.redo.title }
-      : undefined
-  );
-  const undoRedoLabels = $derived(
-    schema.showUndoRedo
-      ? { undo: translations.undo.label, redo: translations.redo.label }
-      : undefined
-  );
-  const undoRedoClassNames = $derived(
-    schema.showUndoRedo ? { undo: classNames.undoAction, redo: classNames.redoAction } : undefined
-  );
+  // Prop bags are getter-backed objects built ONCE, not `$derived` object literals. See
+  // `withCommonProps`.
+  const common = {
+    get level() {
+      return path.length;
+    },
+    get path() {
+      return path;
+    },
+    get disabled() {
+      return parts.disabled;
+    },
+    get context() {
+      return props.context;
+    },
+    get validation() {
+      return parts.validationResult;
+    },
+    get schema() {
+      return schema;
+    },
+  };
 
   const controls = $derived(schema.controls);
-  const ShiftActionsControlElement = $derived(controls.shiftActions);
-  const CombinatorSelectorControlElement = $derived(controls.combinatorSelector);
-  const NotToggleControlElement = $derived(controls.notToggle);
-  const AddRuleActionControlElement = $derived(controls.addRuleAction);
-  const AddGroupActionControlElement = $derived(controls.addGroupAction);
-  const CloneGroupActionControlElement = $derived(controls.cloneGroupAction);
-  const LockGroupActionControlElement = $derived(controls.lockGroupAction);
-  const MuteGroupActionControlElement = $derived(controls.muteGroupAction);
-  const UndoRedoActionsControlElement = $derived(controls.undoRedoActions);
-  const RemoveGroupActionControlElement = $derived(controls.removeGroupAction);
+
+  const shiftActionsProps = withCommonProps(common, {
+    testID: TestID.shiftActions,
+    get titles() {
+      return schema.showShiftActions
+        ? {
+            shiftUp: translations.shiftActionUp.title,
+            shiftDown: translations.shiftActionDown.title,
+          }
+        : undefined;
+    },
+    get labels() {
+      return schema.showShiftActions
+        ? {
+            shiftUp: translations.shiftActionUp.label,
+            shiftDown: translations.shiftActionDown.label,
+          }
+        : undefined;
+    },
+    get className() {
+      return classNames.shiftActions;
+    },
+    get shiftUp() {
+      return parts.shiftGroupUp;
+    },
+    get shiftDown() {
+      return parts.shiftGroupDown;
+    },
+    get shiftUpDisabled() {
+      return props.shiftUpDisabled;
+    },
+    get shiftDownDisabled() {
+      return props.shiftDownDisabled;
+    },
+    get ruleOrGroup() {
+      return ruleGroup;
+    },
+  });
+
+  const combinatorSelectorProps = withCommonProps(common, {
+    testID: TestID.combinators,
+    get options() {
+      return schema.combinators;
+    },
+    get value() {
+      return parts.combinator;
+    },
+    get title() {
+      return translations.combinators.title;
+    },
+    get className() {
+      return classNames.combinators;
+    },
+    get handleOnChange() {
+      return parts.onCombinatorChange;
+    },
+    get rules() {
+      return ruleGroup.rules;
+    },
+    get ruleGroup() {
+      return ruleGroup;
+    },
+  });
+
+  const notToggleProps = withCommonProps(common, {
+    testID: TestID.notToggle,
+    get className() {
+      return classNames.notToggle;
+    },
+    get title() {
+      return translations.notToggle.title;
+    },
+    get label() {
+      return translations.notToggle.label;
+    },
+    get checked() {
+      return ruleGroup.not;
+    },
+    get handleOnChange() {
+      return parts.onNotToggleChange;
+    },
+    get ruleGroup() {
+      return ruleGroup;
+    },
+  });
+
+  const addRuleActionProps = withCommonProps(common, {
+    testID: TestID.addRule,
+    get label() {
+      return translations.addRule.label;
+    },
+    get title() {
+      return translations.addRule.title;
+    },
+    get className() {
+      return classNames.addRule;
+    },
+    get handleOnClick() {
+      return parts.addRule;
+    },
+    get rules() {
+      return ruleGroup.rules;
+    },
+    get ruleOrGroup() {
+      return ruleGroup;
+    },
+  });
+
+  const addGroupActionProps = withCommonProps(common, {
+    testID: TestID.addGroup,
+    get label() {
+      return translations.addGroup.label;
+    },
+    get title() {
+      return translations.addGroup.title;
+    },
+    get className() {
+      return classNames.addGroup;
+    },
+    get handleOnClick() {
+      return parts.addGroup;
+    },
+    get rules() {
+      return ruleGroup.rules;
+    },
+    get ruleOrGroup() {
+      return ruleGroup;
+    },
+  });
+
+  const cloneGroupActionProps = withCommonProps(common, {
+    testID: TestID.cloneGroup,
+    get label() {
+      return translations.cloneRuleGroup.label;
+    },
+    get title() {
+      return translations.cloneRuleGroup.title;
+    },
+    get className() {
+      return classNames.cloneGroup;
+    },
+    get handleOnClick() {
+      return parts.cloneGroup;
+    },
+    get rules() {
+      return ruleGroup.rules;
+    },
+    get ruleOrGroup() {
+      return ruleGroup;
+    },
+  });
+
+  const lockGroupActionProps = withCommonProps(common, {
+    testID: TestID.lockGroup,
+    get label() {
+      return translations.lockGroup.label;
+    },
+    get title() {
+      return translations.lockGroup.title;
+    },
+    get className() {
+      return classNames.lockGroup;
+    },
+    get handleOnClick() {
+      return parts.toggleLockGroup;
+    },
+    get rules() {
+      return ruleGroup.rules;
+    },
+    get disabledTranslation() {
+      return props.parentDisabled ? undefined : translations.lockGroupDisabled;
+    },
+    get ruleOrGroup() {
+      return ruleGroup;
+    },
+  });
+
+  const muteGroupActionProps = withCommonProps(common, {
+    testID: TestID.muteGroup,
+    get label() {
+      return ruleGroup.muted ? translations.unmuteGroup.label : translations.muteGroup.label;
+    },
+    get title() {
+      return ruleGroup.muted ? translations.unmuteGroup.title : translations.muteGroup.title;
+    },
+    get className() {
+      return classNames.muteGroup;
+    },
+    get handleOnClick() {
+      return parts.toggleMuteGroup;
+    },
+    get rules() {
+      return ruleGroup.rules;
+    },
+    get ruleOrGroup() {
+      return ruleGroup;
+    },
+  });
+
+  const undoRedoActionsProps = withCommonProps(common, {
+    testID: TestID.undoRedoActions,
+    get titles() {
+      return schema.showUndoRedo
+        ? { undo: translations.undo.title, redo: translations.redo.title }
+        : undefined;
+    },
+    get labels() {
+      return schema.showUndoRedo
+        ? { undo: translations.undo.label, redo: translations.redo.label }
+        : undefined;
+    },
+    get className() {
+      return classNames.undoRedoActions;
+    },
+    get classNames() {
+      return schema.showUndoRedo
+        ? { undo: classNames.undoAction, redo: classNames.redoAction }
+        : undefined;
+    },
+    get ruleOrGroup() {
+      return ruleGroup;
+    },
+  });
+
+  const removeGroupActionProps = withCommonProps(common, {
+    testID: TestID.removeGroup,
+    get label() {
+      return translations.removeGroup.label;
+    },
+    get title() {
+      return translations.removeGroup.title;
+    },
+    get className() {
+      return classNames.removeGroup;
+    },
+    get handleOnClick() {
+      return parts.removeGroup;
+    },
+    get rules() {
+      return ruleGroup.rules;
+    },
+    get ruleOrGroup() {
+      return ruleGroup;
+    },
+  });
 </script>
 
 {#if schema.showShiftActions && path.length > 0}
-  <ShiftActionsControlElement
-    {...common}
-    testID={TestID.shiftActions}
-    titles={shiftTitles}
-    labels={shiftLabels}
-    className={classNames.shiftActions}
-    shiftUp={parts.shiftGroupUp}
-    shiftDown={parts.shiftGroupDown}
-    shiftUpDisabled={props.shiftUpDisabled}
-    shiftDownDisabled={props.shiftDownDisabled}
-    ruleOrGroup={ruleGroup} />
+  <Control control={controls.shiftActions} props={shiftActionsProps} />
 {/if}
 {#if !schema.showCombinatorsBetweenRules && !schema.independentCombinators}
-  <CombinatorSelectorControlElement
-    {...common}
-    testID={TestID.combinators}
-    options={schema.combinators}
-    value={parts.combinator}
-    title={translations.combinators.title}
-    className={classNames.combinators}
-    handleOnChange={parts.onCombinatorChange}
-    rules={ruleGroup.rules}
-    {ruleGroup} />
+  <Control control={controls.combinatorSelector} props={combinatorSelectorProps} />
 {/if}
 {#if schema.showNotToggle}
-  <NotToggleControlElement
-    {...common}
-    testID={TestID.notToggle}
-    className={classNames.notToggle}
-    title={translations.notToggle.title}
-    label={translations.notToggle.label}
-    checked={ruleGroup.not}
-    handleOnChange={parts.onNotToggleChange}
-    {ruleGroup} />
+  <Control control={controls.notToggle} props={notToggleProps} />
 {/if}
-<AddRuleActionControlElement
-  {...common}
-  testID={TestID.addRule}
-  label={translations.addRule.label}
-  title={translations.addRule.title}
-  className={classNames.addRule}
-  handleOnClick={parts.addRule}
-  rules={ruleGroup.rules}
-  ruleOrGroup={ruleGroup} />
+<Control control={controls.addRuleAction} props={addRuleActionProps} />
 {#if schema.maxLevels > path.length}
-  <AddGroupActionControlElement
-    {...common}
-    testID={TestID.addGroup}
-    label={translations.addGroup.label}
-    title={translations.addGroup.title}
-    className={classNames.addGroup}
-    handleOnClick={parts.addGroup}
-    rules={ruleGroup.rules}
-    ruleOrGroup={ruleGroup} />
+  <Control control={controls.addGroupAction} props={addGroupActionProps} />
 {/if}
 {#if schema.showCloneButtons && path.length > 0}
-  <CloneGroupActionControlElement
-    {...common}
-    testID={TestID.cloneGroup}
-    label={translations.cloneRuleGroup.label}
-    title={translations.cloneRuleGroup.title}
-    className={classNames.cloneGroup}
-    handleOnClick={parts.cloneGroup}
-    rules={ruleGroup.rules}
-    ruleOrGroup={ruleGroup} />
+  <Control control={controls.cloneGroupAction} props={cloneGroupActionProps} />
 {/if}
 {#if schema.showLockButtons}
-  <LockGroupActionControlElement
-    {...common}
-    testID={TestID.lockGroup}
-    label={translations.lockGroup.label}
-    title={translations.lockGroup.title}
-    className={classNames.lockGroup}
-    handleOnClick={parts.toggleLockGroup}
-    rules={ruleGroup.rules}
-    disabledTranslation={props.parentDisabled ? undefined : translations.lockGroupDisabled}
-    ruleOrGroup={ruleGroup} />
+  <Control control={controls.lockGroupAction} props={lockGroupActionProps} />
 {/if}
 {#if schema.showMuteButtons}
-  <MuteGroupActionControlElement
-    {...common}
-    testID={TestID.muteGroup}
-    label={ruleGroup.muted ? translations.unmuteGroup.label : translations.muteGroup.label}
-    title={ruleGroup.muted ? translations.unmuteGroup.title : translations.muteGroup.title}
-    className={classNames.muteGroup}
-    handleOnClick={parts.toggleMuteGroup}
-    rules={ruleGroup.rules}
-    ruleOrGroup={ruleGroup} />
+  <Control control={controls.muteGroupAction} props={muteGroupActionProps} />
 {/if}
 {#if schema.showUndoRedo && path.length === 0}
-  <UndoRedoActionsControlElement
-    {...common}
-    testID={TestID.undoRedoActions}
-    titles={undoRedoTitles}
-    labels={undoRedoLabels}
-    className={classNames.undoRedoActions}
-    classNames={undoRedoClassNames}
-    ruleOrGroup={ruleGroup} />
+  <Control control={controls.undoRedoActions} props={undoRedoActionsProps} />
 {/if}
 {#if path.length > 0}
-  <RemoveGroupActionControlElement
-    {...common}
-    testID={TestID.removeGroup}
-    label={translations.removeGroup.label}
-    title={translations.removeGroup.title}
-    className={classNames.removeGroup}
-    handleOnClick={parts.removeGroup}
-    rules={ruleGroup.rules}
-    ruleOrGroup={ruleGroup} />
+  <Control control={controls.removeGroupAction} props={removeGroupActionProps} />
 {/if}

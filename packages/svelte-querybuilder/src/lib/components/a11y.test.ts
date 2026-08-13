@@ -29,7 +29,7 @@ const wcagTags = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
  * labels them with `title` alone, and full DOM parity is a locked decision for this port, so
  * adding `aria-label` here would break the conformance harness. It is a best-practice rule, not
  * a WCAG failure—`title` does produce an accessible name, which is why `label`/`aria-*` rules at
- * level A pass. Consumers who need a visible label can supply one through `controlElements` or a
+ * level A pass. Consumers who need a visible label can supply one through `controls` or a
  * snippet.
  *
  * Listed rather than suppressed so that any *other* best-practice regression still fails.
@@ -39,13 +39,23 @@ const acceptedBestPracticeViolations = ['label-title-only'];
 /**
  * `vitest-axe`'s `toHaveNoViolations` matcher is not registered in this project's setup file, so
  * assert on the results directly.
+ *
+ * One `axe()` pass covers both tag sets and partitions the result by each violation's own `tags`.
+ * Running the two sets separately doubles the cost of the most expensive assertion in the suite,
+ * which is what pushed the `multiValue` scenario past the default 5s timeout on CI.
  */
 const expectNoViolations = async (container: Element): Promise<void> => {
-  const wcag = await axe(container, { runOnly: wcagTags });
-  expect(wcag.violations.map(v => `${v.id}: ${v.help}`)).toEqual([]);
+  const { violations } = await axe(container, { runOnly: [...wcagTags, 'best-practice'] });
 
-  const bestPractice = await axe(container, { runOnly: ['best-practice'] });
-  expect(bestPractice.violations.map(v => v.id).toSorted()).toEqual(acceptedBestPracticeViolations);
+  const wcag = violations.filter(v => v.tags.some(t => wcagTags.includes(t)));
+  expect(wcag.map(v => `${v.id}: ${v.help}`)).toEqual([]);
+
+  // A rule can carry both a WCAG and a best-practice tag; exclude anything already asserted
+  // above so a WCAG regression is reported once, by the check that describes it best.
+  const bestPractice = violations.filter(
+    v => !wcag.includes(v) && v.tags.includes('best-practice')
+  );
+  expect(bestPractice.map(v => v.id).toSorted()).toEqual(acceptedBestPracticeViolations);
 };
 
 describe('accessibility', () => {

@@ -9,15 +9,31 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Query state is now owned entirely by Svelte runes. `QueryManager` is gone from this package: core's pure functions (`add`/`remove`/`update`/`move`, `createQueryActions`, `prepareOptionList`, `deriveRuleContext`, `shouldCoalesce`) supply the logic, and the reactive graph lives in `$state`/`$derived`. `createQueryBuilderState` contains no `$effect` at all, and no longer relies on deep-compare, live closures, a config-version counter, subscription mirroring, or try/catch around immer's freeze.
 
+Control elements are now composed the Svelte way. Each of the 24 control names is a top-level snippet prop, so `{#snippet valueEditor(props)}` works as a direct child of `<QueryBuilder>`, and the internal component-ABI trick that used to make snippets and components interchangeable is gone.
+
 ### Removed
 
+- **Breaking:** the `controlElements` prop, replaced by `controls` (see below).
+- **Breaking:** `ControlSnippets` and the 24 `${key}Snippet` props it generated. There is now one name per control.
+- `snippetToComponent` and `SnippetHost`, which fabricated a component from a snippet by invoking a compiled `.svelte` module through Svelte's undocumented `(anchor | payload, props)` calling convention, plus the `WeakMap` that kept the fabricated components identity-stable. Nothing in the package relies on Svelte internals now.
+- `nullComponent`. A `null` control short-circuits in the renderer instead of rendering an empty component.
 - **Breaking:** the `manager` prop and `schema.manager`. External `QueryManager` control was speculative, unused, and the one thing runes cannot own. Hold the query yourself and use `bind:query`, or `query` + `onQueryChange`.
 - **Breaking:** `enableMountQueryChange`. Its behavior is now derived from first principles — see below.
 - `createRuleContext` and `createRuleGroupContext`, along with the `Derived<T>` (`{ readonly current: T }`) wrapper type. `createRuleParts`/`createRuleGroupParts` are the supported path and return getters directly.
 - `createActions`, superseded by core's `createQueryActions`.
 
+### Added
+
+- Top-level snippet props for every control: `valueEditor`, `removeRuleAction`, `ruleGroup`, `actionElement`, `valueSelector`, and so on. A snippet declared inside a component's tags only becomes a prop when the name is top-level, which is what makes the idiomatic form reachable.
+- `controls`, the bulk object form, for configuration assembled programmatically. It accepts components, `null`, and snippets wrapped as `{ snippet }`.
+
 ### Changed
 
+- **Breaking:** control elements are typed `Control<P> = Component<P> | { snippet: Snippet<[P]> }`, or `null`. Snippets and components are both plain functions at runtime with no reliable way to tell them apart, so a snippet used as a control carries a wrapper object; the top-level snippet props wrap automatically. `ControlElementsProp` is now `ControlsProp`, and `ControlPropsMap` is the single source of truth for control names and their prop types.
+- **Breaking:** `Controls` entries are uniformly nullable — including `actionElement`, `valueSelector`, `rule`, and `ruleGroup` — with `null` meaning "render nothing". Every key is always present after resolution.
+- **Breaking:** `selectorComponent`, `numericEditorComponent`, and `InlineCombinatorProps.component` accept a `Control`, so a `valueSelector` supplied as a snippet applies inside `ValueEditor` and `MatchModeEditor` too.
+- **Breaking:** `mergeControlElements` is now `mergeControls(controls, snippets, contextControls, contextSnippets, defaults)`.
+- A query builder publishes its _resolved_ controls through context, so a nested (subquery) builder inherits what the outer one resolved and overrides it per key with its own props.
 - **Breaking:** `schema.manager` is replaced by `schema.history` — `canUndo`, `canRedo`, `undo`, `redo`, `clear`. Backed by getters, so reads stay reactive without dependency pokes.
 - **Breaking:** the `skipHook` option is renamed `skipValueReset` on `MatchModeEditor` and the value-editor reset. It suppresses the value reset, which is what the name now says.
 - **Breaking:** `shiftActions` and `undoRedoActions` no longer receive the `actionElement` bulk control override, despite the plural suffix. Bulk classification now uses core's explicit `controlKind` map instead of matching on key suffixes, so a control named `somethingSelector` can no longer silently inherit `valueSelector`.
@@ -27,6 +43,10 @@ Query state is now owned entirely by Svelte runes. `QueryManager` is gone from t
 - Undo/redo history is two `$state.raw` stacks with coalescing delegated to core's `shouldCoalesce`, so the coalescing rule cannot drift from core's.
 - `QueryBuilder` publishes context as `setQueryBuilderContext(() => state.context)` rather than an `Object.defineProperty` reflection loop, so the key set is no longer snapshotted at initialization. `getQueryBuilderContext` returns a getter.
 - Minimum `@react-querybuilder/core` is now 8.23.0, for the query-tool `freeze` opt-out (deep-freezing a Svelte `$state` proxy throws), `shouldCoalesce`, `controlKeys`/`controlKind`, and `DefaultFieldProp`/`DefaultOperatorProp`.
+
+### Fixed
+
+- Mounting a query with rules whose `value` no longer matches their `operator` — the ones for which core's `getValueEditorReset` returns `reset: true` — is roughly 40x faster. Each such rule commits a query change during mount, and every commit was re-dirtying every prop of every control in the tree, so the cost grew quadratically in the number of reset-eligible rules (~1s for a two-rule case in an eight-rule tree). Control prop bags are now getter-backed objects built once, rather than `$derived` object literals rebuilt per commit: `Control` forwards them through `{...props}`, and Svelte's `spread_props` resolves one key at a time, so each of a control's props subscribes to only its own sources instead of to the union of all of them. Interactive editing was never affected.
 
 ## [0.1.1] - 2026-08-05
 

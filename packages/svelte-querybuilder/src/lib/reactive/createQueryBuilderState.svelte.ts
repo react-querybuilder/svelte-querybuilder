@@ -96,7 +96,7 @@ export interface QueryBuilderState<F extends FullField, O extends string> {
  */
 export interface CreateQueryBuilderStateOptions<F extends FullField, O extends string> {
   /**
-   * Default components for every control, applied last in the `controlElements` merge. Provided
+   * Default components for every control, applied last in the control merge. Provided
    * by the component layer so that this module stays free of component imports.
    */
   defaultControls?: Partial<Controls<F, O>>;
@@ -618,7 +618,7 @@ export const createQueryBuilderState = <
   });
 
   const contextValue = $derived<QueryBuilderContextProps<F, OName>>({
-    controlElements: config.controls,
+    controls: config.controls,
     controlClassnames: config.classNames,
     translations: config.translations,
     debugMode: config.debugMode,

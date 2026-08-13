@@ -10,12 +10,13 @@ import type {
   RuleGroupTypeAny,
   RuleGroupTypeIC,
 } from '@react-querybuilder/core';
-import type { Snippet } from 'svelte';
+import type { Component, Snippet } from 'svelte';
 import type {
   ActionProps,
+  Control,
   Controls,
-  ControlElementsProp,
-  ControlSnippets,
+  ControlsProp,
+  ControlSnippetProps,
   QueryBuilderProps,
   RuleGroupProps,
   RuleProps,
@@ -23,6 +24,7 @@ import type {
   SimpleQueryBuilderProps,
   SimpleQueryBuilderPropsIC,
   Translations,
+  UndoRedoActionsProps,
   ValueEditorProps,
 } from './index.js';
 
@@ -60,17 +62,27 @@ assertType<boolean | undefined>(stdProps.independentCombinators);
 
 // #region Controls
 declare const controls: Controls<FullField, string>;
-// Every entry is present and non-nullable after finalization, including `undoRedoActions`.
-assertType<NonNullable<typeof controls.undoRedoActions>>(controls.undoRedoActions);
-assertType<NonNullable<typeof controls.valueEditor>>(controls.valueEditor);
+// Every entry is present after finalization, including `undoRedoActions`; `null` means
+// "render nothing".
+assertType<Control<UndoRedoActionsProps> | null>(controls.undoRedoActions);
+assertType<Control<ValueEditorProps<FullField, string>> | null>(controls.valueEditor);
+// A control is a component or a wrapped snippet, never a bare snippet: the two are
+// indistinguishable at runtime.
+declare const actionComponent: Component<ActionProps>;
+declare const actionSnippet: Snippet<[ActionProps]>;
+assertType<ControlsProp<FullField, string>['actionElement']>(actionComponent);
+assertType<ControlsProp<FullField, string>['actionElement']>({ snippet: actionSnippet });
+assertType<ControlsProp<FullField, string>['actionElement']>(null);
+// @ts-expect-error a bare snippet is not a control
+assertType<ControlsProp<FullField, string>['actionElement']>(actionSnippet);
+// @ts-expect-error a bare snippet is not a control
+assertType<Controls<FullField, string>['notToggle']>(undefined as unknown as Snippet<[never]>);
 
-declare const controlElements: ControlElementsProp<FullField, string>;
-// ...but `null` is accepted on the way in.
-assertType<null | undefined | NonNullable<typeof controlElements.valueEditor>>(
-  controlElements.valueEditor
-);
+declare const controlsProp: ControlsProp<FullField, string>;
+// Entries are optional on the way in.
+assertType<null | undefined | NonNullable<typeof controls.valueEditor>>(controlsProp.valueEditor);
 // @ts-expect-error `dragHandle` is not a control element in this package
-assertType<unknown>(controlElements.dragHandle);
+assertType<unknown>(controlsProp.dragHandle);
 // #endregion
 
 // #region Rule/RuleGroup props — no deprecated per-prop fallbacks
@@ -105,13 +117,15 @@ assertType<Schema<FullField, string>>(valueEditorProps.schema);
 // #endregion
 
 // #region Snippet props
-declare const snippets: ControlSnippets<FullField, string>;
-assertType<Snippet<[ValueEditorProps<FullField, string>]> | undefined>(snippets.valueEditorSnippet);
-assertType<Snippet<[ActionProps]> | undefined>(snippets.actionElementSnippet);
+// One name per control: the top-level prop takes a snippet, `controls` takes a component.
+declare const snippets: ControlSnippetProps<FullField, string>;
+assertType<Snippet<[ValueEditorProps<FullField, string>]> | undefined>(snippets.valueEditor);
+assertType<Snippet<[ActionProps]> | undefined>(snippets.actionElement);
 // @ts-expect-error there is no `dragHandle` control, so there is no snippet for it either
-assertType<unknown>(snippets.dragHandleSnippet);
-// Snippet props are part of `QueryBuilderProps` and inheritable through context.
-assertType<Snippet<[RuleProps]> | undefined>(stdProps.ruleSnippet);
+assertType<unknown>(snippets.dragHandle);
+// Snippet props are top-level props of `QueryBuilder`, which is what makes
+// `{#snippet rule(props)}` work as a direct child.
+assertType<Snippet<[RuleProps]> | undefined>(stdProps.rule);
 // #endregion
 
 // #region Convenience aliases

@@ -3,7 +3,7 @@
 Every part of the rendered tree can be replaced. There are three levels, in order of increasing reach:
 
 1. **Translations** — change the text (or markup) of a label or tooltip.
-2. **Snippets and `controlElements`** — replace an individual control.
+2. **Snippets and `controls`** — replace an individual control.
 3. **Context** — apply either of the above to every query builder in a subtree.
 
 Before replacing a component, check whether [styling](./styling.md) gets you there.
@@ -36,27 +36,29 @@ Titles are plain strings — they end up in a `title` attribute, which cannot ho
 
 ## Replacing a control
 
-Each control has two interchangeable customization points: a snippet prop and a `controlElements` entry.
+Every control has one name — `valueEditor`, `removeRuleAction`, `ruleGroup`, and so on — and two ways to supply a replacement: a snippet on the top-level prop of that name, or a component in the `controls` object.
+
+The split is not arbitrary. Snippets and components are both plain functions at runtime with no reliable way to tell them apart, so each channel is typed for exactly one kind. Snippets get the top-level prop because a `{#snippet}` declared inside a component's tags only becomes a prop when the name is top-level — it cannot populate a nested object.
 
 ### Snippet props
 
-For every key `x` of `controlElements` there is an `xSnippet` prop. The snippet takes one argument: the props object the default component would have received.
+The snippet takes one argument: the props object the default component would have received.
 
 ```svelte
-{#snippet valueEditorSnippet(props)}
-  <input
-    class={props.className}
-    value={props.value}
-    disabled={props.disabled}
-    oninput={e => props.handleOnChange(e.currentTarget.value)} />
-{/snippet}
-
-<QueryBuilder {fields} bind:query {valueEditorSnippet} />
+<QueryBuilder {fields} bind:query>
+  {#snippet valueEditor(props)}
+    <input
+      class={props.className}
+      value={props.value}
+      disabled={props.disabled}
+      oninput={e => props.handleOnChange(e.currentTarget.value)} />
+  {/snippet}
+</QueryBuilder>
 ```
 
 Snippets are the better fit when the replacement is small, needs values from the surrounding scope, or is only used once.
 
-### `controlElements`
+### The `controls` prop
 
 Pass a Svelte component instead. Better fit when the replacement is reusable or needs its own state:
 
@@ -65,33 +67,43 @@ Pass a Svelte component instead. Better fit when the replacement is reusable or 
   import MyValueEditor from './MyValueEditor.svelte';
 </script>
 
-<QueryBuilder {fields} bind:query controlElements={{ valueEditor: MyValueEditor }} />
+<QueryBuilder {fields} bind:query controls={{ valueEditor: MyValueEditor }} />
 ```
 
-Passing `null` renders nothing:
+`null` renders nothing:
 
 ```svelte
-<QueryBuilder {fields} bind:query controlElements={{ lockRuleAction: null }} />
+<QueryBuilder {fields} bind:query controls={{ lockRuleAction: null }} />
+```
+
+A snippet can go in `controls` too, wrapped in `{ snippet }`, for configuration assembled programmatically:
+
+```svelte
+<QueryBuilder {fields} bind:query controls={{ valueEditor: { snippet: myRawSnippet } }} />
 ```
 
 ### Bulk overrides
 
-`actionElement`/`actionElementSnippet` replaces every button-type control at once (`addRuleAction`, `removeGroupAction`, `shiftActions`, …), and `valueSelector`/`valueSelectorSnippet` replaces every `<select>`-type control (`fieldSelector`, `operatorSelector`, `combinatorSelector`, `valueSourceSelector`). Neither applies to `valueEditor`, `rule`, `ruleGroup`, `inlineCombinator`, `notToggle`, or `matchModeEditor`.
+`actionElement` replaces every button-type control at once (`addRuleAction`, `removeGroupAction`, `cloneRuleAction`, …), and `valueSelector` replaces every `<select>`-type control (`fieldSelector`, `operatorSelector`, `combinatorSelector`, `valueSourceSelector`). Both work as a snippet prop or a `controls` entry. Neither applies to `valueEditor`, `rule`, `ruleGroup`, `inlineCombinator`, `notToggle`, or `matchModeEditor`.
+
+Which controls are "actions" and which are "selectors" comes from core's `controlKind` map, not from the shape of the name — `shiftActions` and `undoRedoActions` are composites and are not bulk-action targets despite the plural suffix.
 
 ## Resolution order
 
 Each control key is resolved independently. Levels are tried in order — props, then inherited context, then the package defaults — and within a level:
 
-1. the keyed snippet (`valueEditorSnippet`)
-2. the keyed component (`controlElements.valueEditor`), where `null` means "render nothing" and stops the search
-3. the bulk snippet (`valueSelectorSnippet`)
-4. the bulk component (`controlElements.valueSelector`)
+1. the keyed snippet (the `valueEditor` prop)
+2. the keyed entry (`controls.valueEditor`), where `null` means "render nothing" and stops the search
+3. the bulk snippet (the `valueSelector` prop)
+4. the bulk entry (`controls.valueSelector`)
 
 So a snippet passed to `QueryBuilder` beats a component passed to `QueryBuilder`, which beats anything inherited from context, which beats the default.
 
 ## Applying customization to a subtree
 
-Context carries configuration — `controlElements`, `controlClassnames`, `translations`, and the boolean flags — down to every query builder below it, including the subquery builders that match modes create.
+Context carries configuration — `controls`, `controlClassnames`, `translations`, and the boolean flags — down to every query builder below it, including the subquery builders that match modes create.
+
+A query builder publishes its _resolved_ controls to its descendants, so a nested builder inherits whatever the outer one ended up with, and still overrides it per key with its own props.
 
 ```svelte
 <script lang="ts">
@@ -100,7 +112,7 @@ Context carries configuration — `controlElements`, `controlClassnames`, `trans
 
   // `setQueryBuilderContext` takes a *getter*, not a value.
   setQueryBuilderContext(() => ({
-    controlElements: { valueEditor: MyValueEditor },
+    controls: { valueEditor: MyValueEditor },
     translations: { addRule: { label: 'Add' } },
     showNotToggle: true,
   }));

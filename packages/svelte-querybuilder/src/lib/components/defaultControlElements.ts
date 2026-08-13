@@ -14,8 +14,8 @@ import ValueSelector from './ValueSelector.svelte';
 /**
  * The default component for every control.
  *
- * `undoRedoActions` has a default because `QueryManager` owns the history and is always
- * constructed with `history: true`.
+ * `undoRedoActions` has a default because the undo/redo stacks are always recorded; there is
+ * nothing to opt into.
  */
 export const defaultControlElements: Controls<FullField, string> = {
   actionElement: ActionElement,

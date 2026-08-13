@@ -317,7 +317,7 @@ describe('QueryBuilder', () => {
 
   it('accepts a replacement control element', () => {
     render(QueryBuilder, {
-      props: { fields, defaultQuery: flatQuery, controlElements: { removeRuleAction: null } },
+      props: { fields, defaultQuery: flatQuery, controls: { removeRuleAction: null } },
     });
 
     expect(screen.queryByTestId(TestID.removeRule)).toBeNull();

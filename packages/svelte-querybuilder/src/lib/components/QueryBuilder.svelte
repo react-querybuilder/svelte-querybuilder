@@ -22,6 +22,7 @@
     RuleGroupTypeAny,
   } from '@react-querybuilder/core';
   import { rootPath } from '@react-querybuilder/core';
+  import Control from '../internal/Control.svelte';
   import { setQueryBuilderContext } from '../reactive/context.svelte.js';
   import { createQueryBuilderState } from '../reactive/createQueryBuilderState.svelte.js';
   import type { QueryBuilderProps } from '../types/props.js';
@@ -42,8 +43,6 @@
   // once, at initialization, so what goes in is a getter rather than the value: descendants read
   // through to the current value instead of capturing the first one.
   setQueryBuilderContext(() => state.context);
-
-  const RuleGroupControlElement = $derived(state.schema.controls.ruleGroup);
 </script>
 
 <div
@@ -51,16 +50,19 @@
   class={state.wrapperClassName}
   data-dnd={state.dndEnabledAttr}
   data-inlinecombinators={state.inlineCombinatorsAttr}>
-  <RuleGroupControlElement
-    translations={state.translations}
-    ruleGroup={state.rootGroup}
-    schema={state.schema}
-    actions={state.actions}
-    id={state.rootGroup.id}
-    path={rootPath}
-    disabled={state.rootGroupDisabled}
-    shiftUpDisabled
-    shiftDownDisabled
-    parentDisabled={state.queryDisabled}
-    context={restProps.context} />
+  <Control
+    control={state.schema.controls.ruleGroup}
+    props={{
+      translations: state.translations,
+      ruleGroup: state.rootGroup,
+      schema: state.schema,
+      actions: state.actions,
+      id: state.rootGroup.id,
+      path: rootPath,
+      disabled: state.rootGroupDisabled,
+      shiftUpDisabled: true,
+      shiftDownDisabled: true,
+      parentDisabled: state.queryDisabled,
+      context: restProps.context,
+    }} />
 </div>
