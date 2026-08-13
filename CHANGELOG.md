@@ -44,6 +44,10 @@ Control elements are now composed the Svelte way. Each of the 24 control names i
 - `QueryBuilder` publishes context as `setQueryBuilderContext(() => state.context)` rather than an `Object.defineProperty` reflection loop, so the key set is no longer snapshotted at initialization. `getQueryBuilderContext` returns a getter.
 - Minimum `@react-querybuilder/core` is now 8.23.0, for the query-tool `freeze` opt-out (deep-freezing a Svelte `$state` proxy throws), `shouldCoalesce`, `controlKeys`/`controlKind`, and `DefaultFieldProp`/`DefaultOperatorProp`.
 
+### Fixed
+
+- Mounting a query with rules whose `value` no longer matches their `operator` — the ones for which core's `getValueEditorReset` returns `reset: true` — is roughly 40x faster. Each such rule commits a query change during mount, and every commit was re-dirtying every prop of every control in the tree, so the cost grew quadratically in the number of reset-eligible rules (~1s for a two-rule case in an eight-rule tree). Control prop bags are now getter-backed objects built once, rather than `$derived` object literals rebuilt per commit: `Control` forwards them through `{...props}`, and Svelte's `spread_props` resolves one key at a time, so each of a control's props subscribes to only its own sources instead of to the union of all of them. Interactive editing was never affected.
+
 ## [0.1.1] - 2026-08-05
 
 ### Fixed
