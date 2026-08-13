@@ -13,7 +13,6 @@
 <script lang="ts">
   import type { FullField, FullOption, RuleGroupType } from '@react-querybuilder/core';
   import { isRuleGroup, prepareOptionList, rootPath } from '@react-querybuilder/core';
-  import { untrack } from 'svelte';
   import { createQueryBuilderState } from '../reactive/createQueryBuilderState.svelte.js';
   import { createRuleGroupParts } from '../reactive/ruleGroupParts.svelte.js';
   import type { RuleParts } from '../reactive/ruleParts.svelte.js';
@@ -42,16 +41,20 @@
     }).optionList
   );
 
-  // Used only until the rule's value becomes a valid group, which happens on the first commit.
-  const initialQuery = untrack(() => schema.createRuleGroup()) as RuleGroupType;
+  // The rule's `value` is the subquery. Anything but a group leaves `query` undefined and lets
+  // the subquery seed itself; a seeded query is emitted once during initialization, which writes
+  // it back through `onChangeValue`. A group without an `id` is passed through all the same —
+  // query-state initialization prepares it and emits the normalized result, so its existing
+  // rules survive.
+  const subQuery = $derived(
+    isRuleGroup(props.rule.value) ? (props.rule.value as RuleGroupType) : undefined
+  );
 
   const subQueryProps = $derived({
     ...subQueryBuilderProps,
     disabled: parts.disabled,
     fields: subproperties,
-    // Write the value back on first render when it is not already a valid rule group.
-    enableMountQueryChange: !isRuleGroup(props.rule.value) || !props.rule.value.id,
-    query: isRuleGroup(props.rule.value) ? (props.rule.value as RuleGroupType) : initialQuery,
+    query: subQuery,
     onQueryChange: parts.onChangeValue,
   } as QueryBuilderProps);
 

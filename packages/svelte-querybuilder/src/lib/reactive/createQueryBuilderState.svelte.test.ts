@@ -1,5 +1,5 @@
 import type { Field, RuleGroupType, RuleGroupTypeIC } from '@react-querybuilder/core';
-import { QueryManager, defaultOperators } from '@react-querybuilder/core';
+import { defaultOperators } from '@react-querybuilder/core';
 import { flushSync } from 'svelte';
 import { describe, expect, it, vi } from 'vitest';
 import type { QueryBuilderProps } from '../types/props.js';
@@ -57,7 +57,7 @@ describe('createQueryBuilderState', () => {
     cleanup();
   });
 
-  it('calls onQueryChange on mount', () => {
+  it('calls onQueryChange once for a query it seeded itself', () => {
     const onQueryChange = vi.fn();
     const { result: state, cleanup } = withRoot(() =>
       createQueryBuilderState(() => ({ fields, onQueryChange }))
@@ -67,10 +67,27 @@ describe('createQueryBuilderState', () => {
     cleanup();
   });
 
-  it('does not call onQueryChange on mount when enableMountQueryChange is false', () => {
+  it('calls onQueryChange once for a query it had to normalize', () => {
     const onQueryChange = vi.fn();
     const { cleanup } = withRoot(() =>
-      createQueryBuilderState(() => ({ fields, onQueryChange, enableMountQueryChange: false }))
+      createQueryBuilderState(() => ({
+        fields,
+        query: { combinator: 'and', rules: [] },
+        onQueryChange,
+      }))
+    );
+    expect(onQueryChange).toHaveBeenCalledTimes(1);
+    cleanup();
+  });
+
+  it('does not call onQueryChange for a query supplied ready to use', () => {
+    const onQueryChange = vi.fn();
+    const { cleanup } = withRoot(() =>
+      createQueryBuilderState(() => ({
+        fields,
+        query: { combinator: 'and', rules: [], id: 'root' },
+        onQueryChange,
+      }))
     );
     expect(onQueryChange).not.toHaveBeenCalled();
     cleanup();
@@ -87,7 +104,7 @@ describe('createQueryBuilderState', () => {
     onQueryChange.mockClear();
     writeBack.mockClear();
 
-    state.actions.onRuleAdd(state.manager.createRule(), []);
+    state.actions.onRuleAdd(state.schema.createRule(), []);
     flush();
 
     expect(state.query.rules).toHaveLength(1);
@@ -97,27 +114,42 @@ describe('createQueryBuilderState', () => {
     cleanup();
   });
 
-  it('notifies once per batch', () => {
-    const onQueryChange = vi.fn();
+  it('records undo/redo history', () => {
     const {
       result: state,
       cleanup,
       flush,
-    } = withRoot(() => createQueryBuilderState(() => ({ fields, onQueryChange })));
-    onQueryChange.mockClear();
+    } = withRoot(() => createQueryBuilderState(() => ({ fields })));
+    expect(state.history.canUndo).toBe(false);
 
-    state.manager.batch(() => {
-      state.manager.add(state.manager.createRule(), []);
-      state.manager.add(state.manager.createRule(), []);
-    });
+    state.actions.onRuleAdd(state.schema.createRule(), []);
     flush();
+    expect(state.query.rules).toHaveLength(1);
+    expect(state.history.canUndo).toBe(true);
+    expect(state.history.canRedo).toBe(false);
 
-    expect(state.query.rules).toHaveLength(2);
-    expect(onQueryChange).toHaveBeenCalledTimes(1);
+    state.history.undo();
+    flush();
+    expect(state.query.rules).toHaveLength(0);
+    expect(state.history.canUndo).toBe(false);
+    expect(state.history.canRedo).toBe(true);
+
+    state.history.redo();
+    flush();
+    expect(state.query.rules).toHaveLength(1);
+    expect(state.history.canRedo).toBe(false);
     cleanup();
   });
 
-  it('pushes a new query prop into the manager without looping', () => {
+  it('does not record the seeded query as an undoable step', () => {
+    const { result: state, cleanup } = withRoot(() =>
+      createQueryBuilderState(() => ({ fields, addRuleToNewGroups: true }))
+    );
+    expect(state.history.canUndo).toBe(false);
+    cleanup();
+  });
+
+  it('adopts a new query prop without looping', () => {
     const props = $state<QueryBuilderProps>({
       fields,
       query: { combinator: 'and', rules: [], id: 'q1' },
@@ -134,13 +166,12 @@ describe('createQueryBuilderState', () => {
 
     expect(state.query.id).toBe('q2');
     expect(state.query.combinator).toBe('or');
-    expect(state.manager.getQuery().id).toBe('q2');
     cleanup();
   });
 
   it('accepts a deeply reactive query prop', () => {
-    // A parent holding the query in `$state` hands back a proxy, which the manager's deep
-    // freeze rejects; the state layer snapshots it instead.
+    // A parent holding the query in `$state` hands back a proxy. Nothing here freezes, so the
+    // proxy is simply adopted as-is.
     const props = $state<QueryBuilderProps>({ fields });
     props.query = { combinator: 'and', id: 'proxied', rules: [] };
 
@@ -159,24 +190,72 @@ describe('createQueryBuilderState', () => {
     cleanup();
   });
 
-  it('uses an externally provided manager', () => {
-    const manager = new QueryManager<RuleGroupType>(
-      { combinator: 'and', rules: [], id: 'external' },
-      { fields }
-    );
-    const {
-      result: state,
-      cleanup,
-      flush,
-    } = withRoot(() => createQueryBuilderState(() => ({ fields, manager })));
+  // The `query` derivation keeps three plain (non-reactive) variables as memory so it can tell
+  // "the prop changed" from "the local query changed" without an `$effect`. These pin the matrix
+  // that memory exists to encode.
+  describe('query prop vs. local commits', () => {
+    it('lets a local commit stand while the query prop is unchanged', () => {
+      const query: RuleGroupType = { combinator: 'and', rules: [], id: 'root' };
+      // Note: `query` is never reassigned, i.e. a consumer that passes an initial query and then
+      // ignores `onQueryChange`. The local commit must not be reverted to it.
+      const {
+        result: state,
+        cleanup,
+        flush,
+      } = withRoot(() => createQueryBuilderState(() => ({ fields, query })));
 
-    expect(state.manager).toBe(manager);
-    expect(state.query.id).toBe('external');
+      state.actions.onRuleAdd(state.schema.createRule(), []);
+      flush();
+      expect(state.query.rules).toHaveLength(1);
 
-    manager.add(manager.createRule(), []);
-    flush();
-    expect(state.query.rules).toHaveLength(1);
-    cleanup();
+      // A second commit, still with no prop change in between.
+      state.actions.onRuleAdd(state.schema.createRule(), []);
+      flush();
+      expect(state.query.rules).toHaveLength(2);
+      cleanup();
+    });
+
+    it('lets a changed query prop win over a local commit', () => {
+      const props = $state<QueryBuilderProps>({
+        fields,
+        query: { combinator: 'and', rules: [], id: 'q1' },
+      });
+      const {
+        result: state,
+        cleanup,
+        flush,
+      } = withRoot(() => createQueryBuilderState(() => props));
+
+      state.actions.onRuleAdd(state.schema.createRule(), []);
+      flush();
+      expect(state.query.rules).toHaveLength(1);
+
+      // The prop changes after the local commit: the prop is the input that wins on change.
+      props.query = { combinator: 'or', rules: [], id: 'q2' };
+      flush();
+      expect(state.query.id).toBe('q2');
+      expect(state.query.rules).toHaveLength(0);
+      cleanup();
+    });
+
+    it('reverts local commits when the query prop is rebuilt on every read', () => {
+      // Documents a hazard rather than a feature: a `query` prop rebuilt as a fresh object on
+      // every read is indistinguishable from a prop the consumer deliberately changed, so it wins
+      // every time and each commit is reverted as fast as it is applied.
+      const query: RuleGroupType = { combinator: 'and', rules: [], id: 'root' };
+      const {
+        result: state,
+        cleanup,
+        flush,
+      } = withRoot(() =>
+        createQueryBuilderState(() => ({ fields, query: structuredClone(query) }))
+      );
+
+      state.actions.onRuleAdd(state.schema.createRule(), []);
+      flush();
+      expect(state.query.rules).toHaveLength(0);
+      cleanup();
+    });
   });
 
   describe('schema', () => {
@@ -206,7 +285,7 @@ describe('createQueryBuilderState', () => {
       cleanup();
     });
 
-    it('prepares option lists with the manager, which receives the merged translations', () => {
+    it('prepares option lists from the merged translations', () => {
       const { result: state, cleanup } = withRoot(() =>
         createQueryBuilderState(() => ({
           fields,
@@ -221,9 +300,7 @@ describe('createQueryBuilderState', () => {
           },
         }))
       );
-      const { schema, manager } = state;
-      expect(schema.fields).toEqual(manager.getFields());
-      expect(schema.combinators).toEqual(manager.getCombinators());
+      const { schema } = state;
       expect(schema.fields[0]).toHaveProperty('label', 'Pick a field');
       expect(
         schema.getOperators('firstName', { fieldData: schema.fieldMap.firstName! })[0]
@@ -308,7 +385,7 @@ describe('createQueryBuilderState', () => {
       cleanup();
     });
 
-    it('creates rules and groups through the manager', () => {
+    it('creates rules and groups from the derived config', () => {
       const { result: state, cleanup } = withRoot(() =>
         createQueryBuilderState(() => ({ fields, addRuleToNewGroups: true }))
       );

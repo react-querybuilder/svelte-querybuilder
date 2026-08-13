@@ -6,7 +6,6 @@ import type {
   FullCombinator,
   FullField,
   FullOperator,
-  QueryManager,
   RuleGroupType,
   RuleGroupTypeAny,
   RuleGroupTypeIC,
@@ -36,9 +35,8 @@ declare const icProps: ICProps;
 
 assertType<RuleGroupTypeIC | undefined>(icProps.query);
 assertType<RuleGroupTypeIC | undefined>(icProps.defaultQuery);
-assertType<QueryManager<RuleGroupTypeIC, FullField, FullOperator, FullCombinator> | undefined>(
-  icProps.manager
-);
+// @ts-expect-error no external manager; the query lives in runes
+assertType<unknown>(icProps.manager);
 assertType<((query: RuleGroupTypeIC) => void) | undefined>(icProps.onQueryChange);
 
 // The `combinator`-bearing variant is a distinct, non-assignable type.
@@ -89,7 +87,10 @@ assertType<unknown>(ruleGroupProps.combinator);
 
 // #region Schema
 declare const schema: Schema<FullField, string>;
-assertType<() => RuleGroupTypeAny>(schema.manager.getQuery);
+assertType<() => RuleGroupTypeAny>(schema.getQuery);
+assertType<boolean>(schema.history.canUndo);
+// @ts-expect-error no `QueryManager`; the query lives in runes
+assertType<unknown>(schema.manager);
 // @ts-expect-error no Redux store
 assertType<unknown>(schema.dispatchQuery);
 // @ts-expect-error no query builder registry

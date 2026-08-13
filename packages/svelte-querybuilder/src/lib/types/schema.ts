@@ -13,7 +13,6 @@ import type {
   Option,
   ParseNumbersPropConfig,
   Path,
-  QueryManager,
   RuleGroupTypeAny,
   RuleType,
   ValidationMap,
@@ -25,18 +24,36 @@ import type { QueryBuilderProps } from './props.js';
 import type { LabelNode } from './translations.js';
 
 /**
+ * The undo/redo stacks for a query builder. Reading `canUndo`/`canRedo` is reactive: both are
+ * getters over the state that backs the stacks, so a component that reads one re-renders when
+ * it changes.
+ *
+ * @group Props
+ */
+export interface QueryHistory {
+  /** Whether there is a previous query to restore. */
+  readonly canUndo: boolean;
+  /** Whether there is an undone query to restore. */
+  readonly canRedo: boolean;
+  /** Restores the previous query. No-op when `canUndo` is `false`. */
+  undo(): void;
+  /** Restores the most recently undone query. No-op when `canRedo` is `false`. */
+  redo(): void;
+  /** Discards both stacks without changing the current query. */
+  clear(): void;
+}
+
+/**
  * Configuration options passed in the `schema` prop from `QueryBuilder` to each subcomponent.
  *
- * The {@link QueryManager} driving this query builder is exposed as `manager`; all query
- * mutations go through it.
+ * Query mutations go through the `actions` prop; this carries configuration and the resolved
+ * field/operator/value derivations that every control needs.
  *
  * @group Props
  */
 export interface Schema<F extends FullField, O extends string> {
-  /**
-   * The {@link QueryManager} driving this query builder. All query mutations go through it.
-   */
-  manager: QueryManager<RuleGroupTypeAny, FullField, FullOperator, FullCombinator>;
+  /** The undo/redo stacks. Read by `UndoRedoActions`. */
+  history: QueryHistory;
   fields: FullOptionList<F>;
   fieldMap: Partial<Record<GetOptionIdentifierType<F>, F>>;
   classNames: Classnames;

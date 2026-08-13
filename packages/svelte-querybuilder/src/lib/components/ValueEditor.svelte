@@ -39,7 +39,7 @@
     value: props.value,
     type: props.type ?? undefined,
     inputType: props.inputType,
-    skipHook: props.skipHook,
+    skipValueReset: props.skipValueReset,
     handleOnChange: props.handleOnChange,
   }));
 

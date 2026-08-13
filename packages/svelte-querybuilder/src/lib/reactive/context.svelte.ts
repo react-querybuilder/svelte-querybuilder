@@ -5,6 +5,8 @@ import type {
   ValidationMap,
 } from '@react-querybuilder/core';
 import {
+  controlKeys,
+  controlKind,
   defaultTranslations,
   mergeAnyTranslations,
   mergeClassnames,
@@ -37,71 +39,32 @@ const emptyObject = {} as const;
 export const nullComponent = ((): Record<string, never> => ({})) as unknown as Component<any>;
 
 /**
- * Config inherited through Svelte context. Carries configuration only—query state lives in the
- * `QueryManager`, so nothing here is stateful and the value can safely be set once during
- * component initialization.
+ * Config inherited through Svelte context.
  *
- * Pass a `$state` object (or an object with getters) if any of the values must stay reactive.
+ * A *getter*, not a value: context is set once, during component initialization, while the
+ * config it carries is `$derived` and re-created whenever a prop changes. Descendants call the
+ * getter from inside their own derivations, so they read through to the current value and track
+ * it, instead of capturing whatever existed at initialization.
  */
 export const setQueryBuilderContext = <F extends FullField = FullField, O extends string = string>(
-  value: QueryBuilderContextProps<F, O>
-): QueryBuilderContextProps<F, O> => setContext(contextKey, value);
+  getValue: () => QueryBuilderContextProps<F, O>
+): (() => QueryBuilderContextProps<F, O>) => setContext(contextKey, getValue);
 
 /**
- * The inherited {@link QueryBuilderContextProps}, or `undefined` when there is no provider (or
- * when called outside of component initialization, as in a unit test).
+ * A getter for the inherited {@link QueryBuilderContextProps}, or `undefined` when there is no
+ * provider (or when called outside of component initialization, as in a unit test).
  */
 export const getQueryBuilderContext = <
   F extends FullField = FullField,
   O extends string = string,
->(): QueryBuilderContextProps<F, O> | undefined => {
+>(): (() => QueryBuilderContextProps<F, O> | undefined) | undefined => {
   try {
-    return getContext<QueryBuilderContextProps<F, O> | undefined>(contextKey);
+    return getContext<(() => QueryBuilderContextProps<F, O>) | undefined>(contextKey);
   } catch {
     // `getContext` throws outside of component initialization.
     return undefined;
   }
 };
-
-/**
- * A control element key that is overridden in bulk by `actionElement`.
- */
-const isActionKey = (key: string): boolean => key.endsWith('Action') || key.endsWith('Actions');
-
-/**
- * A control element key that is overridden in bulk by `valueSelector`.
- */
-const isSelectorKey = (key: string): boolean => key.endsWith('Selector');
-
-/**
- * Every key of {@link Controls}, in a stable order.
- */
-const controlKeys = [
-  'actionElement',
-  'addGroupAction',
-  'addRuleAction',
-  'cloneGroupAction',
-  'cloneRuleAction',
-  'combinatorSelector',
-  'fieldSelector',
-  'inlineCombinator',
-  'lockGroupAction',
-  'lockRuleAction',
-  'matchModeEditor',
-  'muteGroupAction',
-  'muteRuleAction',
-  'notToggle',
-  'operatorSelector',
-  'removeGroupAction',
-  'removeRuleAction',
-  'rule',
-  'ruleGroup',
-  'shiftActions',
-  'undoRedoActions',
-  'valueEditor',
-  'valueSelector',
-  'valueSourceSelector',
-] as const satisfies readonly (keyof Controls<FullField, string>)[];
 
 /**
  * The wrapped component for a named snippet prop, or `undefined` if that prop is absent.
@@ -120,9 +83,11 @@ const snippetFor = <F extends FullField, O extends string>(
  * precedence to props.
  *
  * Mirrors `useMergedContext`: a `null` entry resolves to {@link nullComponent} (rendering
- * nothing), `actionElement` is a bulk override for every `*Action`/`*Actions` key, and
- * `valueSelector` is a bulk override for every `*Selector` key. Bulk overrides never apply to
- * `valueEditor`, `rule`, `ruleGroup`, `inlineCombinator`, `notToggle`, or `matchModeEditor`.
+ * nothing), `actionElement` is a bulk override for every control core classifies as an
+ * `"action"`, and `valueSelector` for every `"selector"`. Which control is which comes from
+ * core's {@link controlKind} map rather than from the shape of the key's name, so a future
+ * control named e.g. `pathSelector` cannot silently inherit `valueSelector`. Note that
+ * `shiftActions` and `undoRedoActions` are *not* action targets despite the plural suffix.
  *
  * Snippets are the Svelte-native customization point and are resolved first. Within a level the
  * order is: keyed snippet, keyed component, bulk snippet, bulk component. Levels are then tried
@@ -151,25 +116,34 @@ export const mergeControlElements = <F extends FullField, O extends string>(
       const keyed = snippetFor(sn, `${key}Snippet`);
       if (keyed) return keyed;
 
-      const comp = ce[key];
+      // Core's `controlKeys` covers three controls this package does not implement
+      // (`dragHandle`, `ruleGroupBodyElements`, `ruleGroupHeaderElements`); they simply never
+      // resolve to anything.
+      const comp = ce[key as keyof ControlElementsProp<F, O>];
       if (comp === null) return nullComponent;
       if (comp) return comp;
 
+      const kind = controlKind[key];
+
       const bulkSnippet =
-        (isActionKey(key) ? snippetFor(sn, 'actionElementSnippet') : undefined) ??
-        (isSelectorKey(key) ? snippetFor(sn, 'valueSelectorSnippet') : undefined);
+        kind === 'action'
+          ? snippetFor(sn, 'actionElementSnippet')
+          : kind === 'selector'
+            ? snippetFor(sn, 'valueSelectorSnippet')
+            : undefined;
       if (bulkSnippet) return bulkSnippet;
 
-      return (
-        (isActionKey(key) ? ce.actionElement : undefined) ??
-        (isSelectorKey(key) ? ce.valueSelector : undefined)
-      );
+      return kind === 'action'
+        ? ce.actionElement
+        : kind === 'selector'
+          ? ce.valueSelector
+          : undefined;
     };
 
     const comp =
       resolveLevel(propsCE, propsSnippets) ??
       resolveLevel(contextCE, contextSnippets) ??
-      defaults[key];
+      defaults[key as keyof Controls<F, O>];
 
     if (comp) merged[key] = comp;
   }
@@ -194,7 +168,7 @@ export const mergeTranslations = (
  * The fully resolved configuration for a query builder.
  */
 export interface MergedQueryBuilderConfig<F extends FullField, O extends string> extends Required<
-  Omit<QueryBuilderFlags, 'preserveQueryStateOnUnmount'>
+  Omit<QueryBuilderFlags, 'preserveQueryStateOnUnmount' | 'enableMountQueryChange'>
 > {
   classNames: Classnames;
   controls: Controls<F, O>;

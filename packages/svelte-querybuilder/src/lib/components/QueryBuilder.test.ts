@@ -99,7 +99,7 @@ describe('QueryBuilder', () => {
     await userEvent.click(screen.getByTestId(TestID.addRule));
 
     expect(screen.getAllByTestId(TestID.rule)).toHaveLength(3);
-    // Once on mount (`enableMountQueryChange` defaults to `true`), once for the addition.
+    // Once for the query this builder seeded itself, once for the addition.
     expect(onQueryChange).toHaveBeenCalledTimes(2);
     expect(onQueryChange.mock.lastCall![0].rules).toHaveLength(3);
   });
@@ -290,20 +290,6 @@ describe('QueryBuilder', () => {
     });
 
     expect(screen.getAllByTestId(TestID.rule)).toHaveLength(1);
-  });
-
-  it('is driven by an external manager', async () => {
-    const { QueryManager } = await import('@react-querybuilder/core');
-    const manager = new QueryManager(flatQuery, { fields });
-
-    render(QueryBuilder, { props: { fields, manager } });
-    expect(screen.getAllByTestId(TestID.rule)).toHaveLength(2);
-
-    manager.remove([0]);
-    await vi.waitFor(() => expect(screen.getAllByTestId(TestID.rule)).toHaveLength(1));
-
-    await userEvent.click(screen.getByTestId(TestID.addRule));
-    expect(manager.getQuery().rules).toHaveLength(2);
   });
 
   it('renders independent combinators inline rather than in the group header', () => {

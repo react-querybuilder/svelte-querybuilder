@@ -1,5 +1,5 @@
 import type { RuleGroupType } from '@react-querybuilder/core';
-import { QueryManager, TestID } from '@react-querybuilder/core';
+import { TestID } from '@react-querybuilder/core';
 import { render, screen } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -35,10 +35,11 @@ const subFields = (subproperties: { name: string; label: string }[]) => [
 ];
 
 /**
- * Structural options reach the manager through `reconfigure`, so a changed prop updates the
- * option lists in place without discarding the query, the undo/redo history, or subscribers.
+ * Configuration is `$derived` from props, so a changed prop invalidates exactly what depended on
+ * it — the option lists — while leaving the query and the undo/redo history alone. Nothing is
+ * re-applied anywhere, which is what these assertions are really pinning down.
  */
-describe('QueryBuilder reconfiguration', () => {
+describe('QueryBuilder prop changes', () => {
   it('updates the field selector when `fields` changes', async () => {
     const { rerender } = render(QueryBuilder, { props: { fields, defaultQuery: query } });
 
@@ -194,17 +195,6 @@ describe('QueryBuilder reconfiguration', () => {
     await rerender({ ...props, fields: altFields });
 
     expect(onQueryChange).not.toHaveBeenCalled();
-  });
-
-  it('never reconfigures an externally supplied manager', async () => {
-    const manager = new QueryManager(query, { fields });
-    const reconfigure = vi.spyOn(manager, 'reconfigure');
-    const { rerender } = render(QueryBuilder, { props: { fields, manager } });
-
-    await rerender({ fields: altFields, manager });
-
-    expect(reconfigure).not.toHaveBeenCalled();
-    expect(optionValues(screen.getByTestId(TestID.fields))).toEqual(['firstName', 'lastName']);
   });
 
   it('updates a subquery builder when `subproperties` change', async () => {

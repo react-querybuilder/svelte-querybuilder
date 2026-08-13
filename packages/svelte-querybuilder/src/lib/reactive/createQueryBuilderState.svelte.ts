@@ -1,5 +1,10 @@
 import type {
+  Classname,
   Classnames,
+  DefaultFieldProp,
+  DefaultOperatorProp,
+  FlexibleOptionList,
+  FlexibleOptionListProp,
   FullCombinator,
   FullField,
   FullOperator,
@@ -12,7 +17,6 @@ import type {
   Option,
   Path,
   QueryActions,
-  QueryManagerOptions,
   RuleGroupTypeAny,
   RuleType,
   ValidationMap,
@@ -20,25 +24,38 @@ import type {
   ValueSourceFullOptions,
 } from '@react-querybuilder/core';
 import {
-  QueryManager,
+  createQueryActions,
+  createRule,
+  createRuleGroup,
+  defaultCombinators,
+  defaultMaxHistory,
+  defaultOperatorLabelMap,
+  defaultOperators,
   deriveQueryBuilderClassNames,
   generateAccessibleDescription,
+  generateID,
+  getFieldData,
+  getMatchModesUtil,
   getRuleDefaultValue,
+  getValueSourcesUtil,
   isRuleGroupTypeIC,
   prepareOptionList,
+  prepareRuleGroup,
   resolveCandidateQuery,
   resolveDefaultOperator,
-  toFlatOptionArray,
+  resolveOperatorList,
+  resolveValueEditorType,
+  resolveValueList,
+  shouldCoalesce,
+  signatureOf,
   unchangedSignature,
 } from '@react-querybuilder/core';
-import { untrack } from 'svelte';
 import type { Controls } from '../types/controls.js';
 import type { QueryBuilderContextProps, QueryBuilderProps } from '../types/props.js';
-import type { Schema } from '../types/schema.js';
+import type { QueryHistory, Schema } from '../types/schema.js';
 import type { LabelNode, TranslationsFull } from '../types/translations.js';
 import type { MergedQueryBuilderConfig } from './context.svelte.js';
 import { getQueryBuilderContext, mergeQueryBuilderConfig } from './context.svelte.js';
-import { createActions } from './createActions.svelte.js';
 
 const emptyValidationMap: ValidationMap = {};
 const emptyDisabledPaths: Path[] = [];
@@ -46,74 +63,20 @@ const defaultGetValueEditorSeparator = (): LabelNode => '';
 const defaultGetRuleOrGroupClassname = (): string => '';
 
 /**
- * Structural equality for manager option values, used to decide whether a prop change is worth a
- * `reconfigure`. Arrays and plain objects are compared by value; everything else—functions
- * included—by identity, which is what makes a config object rebuilt on every render compare equal
- * as long as its data did not change.
- */
-const valuesEqual = (a: unknown, b: unknown): boolean => {
-  if (Object.is(a, b)) return true;
-  if (Array.isArray(a) || Array.isArray(b)) {
-    return (
-      Array.isArray(a) &&
-      Array.isArray(b) &&
-      a.length === b.length &&
-      a.every((v, i) => valuesEqual(v, b[i]))
-    );
-  }
-  if (
-    typeof a !== 'object' ||
-    typeof b !== 'object' ||
-    a === null ||
-    b === null ||
-    Object.getPrototypeOf(a) !== Object.getPrototypeOf(b)
-  ) {
-    return false;
-  }
-  const aKeys = Object.keys(a);
-  return (
-    aKeys.length === Object.keys(b).length &&
-    aKeys.every(k =>
-      valuesEqual((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k])
-    )
-  );
-};
-
-/**
- * Applies a query to the manager.
+ * Everything a `QueryBuilder` component needs to render, derived from its props.
  *
- * The manager deep-freezes whatever it is given, which throws if the query is a deeply reactive
- * `$state` proxy—a parent component holding the query in `$state` and passing it back in is the
- * common case. Svelte offers no way to test for a proxy, so this attempts the assignment and
- * falls back to a snapshot. The manager freezes before it commits, so a failed attempt leaves
- * it untouched.
- *
- * The optimistic path is the important one: it preserves reference identity, which controlled
- * mode relies on to tell its own updates apart from external ones.
- */
-const setManagerQuery = (
-  manager: { setQuery: (query: RuleGroupTypeAny) => unknown },
-  query: RuleGroupTypeAny
-): void => {
-  try {
-    manager.setQuery(query);
-  } catch {
-    manager.setQuery($state.snapshot(query) as RuleGroupTypeAny);
-  }
-};
-
-/**
- * Everything a `QueryBuilder` component needs to render, derived from its props and driven by a
- * {@link QueryManager}.
+ * The query and its undo/redo stacks are held in runes; every derivation is a `$derived` over
+ * one of core's pure resolvers. Nothing here is stateful outside the reactive graph, so there
+ * is no subscription, no cache-invalidation token, and no configuration to re-apply.
  */
 export interface QueryBuilderState<F extends FullField, O extends string> {
-  /** The current query. Reassigned whenever the manager notifies. */
+  /** The current query. */
   readonly query: RuleGroupTypeAny;
   /** Alias for {@link QueryBuilderState.query}. */
   readonly rootGroup: RuleGroupTypeAny;
-  readonly manager: QueryManager<RuleGroupTypeAny, F, FullOperator, FullCombinator>;
   readonly schema: Schema<F, O>;
   readonly actions: QueryActions;
+  readonly history: QueryHistory;
   readonly translations: TranslationsFull;
   readonly controls: Controls<F, O>;
   readonly classNames: Classnames;
@@ -138,10 +101,10 @@ export interface CreateQueryBuilderStateOptions<F extends FullField, O extends s
    */
   defaultControls?: Partial<Controls<F, O>>;
   /**
-   * Inherited context. Defaults to {@link getQueryBuilderContext}, which is only available
-   * during component initialization.
+   * A getter for the inherited context. Defaults to {@link getQueryBuilderContext}, which is
+   * only available during component initialization.
    */
-  context?: QueryBuilderContextProps<F, O>;
+  context?: () => QueryBuilderContextProps<F, O> | undefined;
   /**
    * Called with each committed query, after `onQueryChange`. `QueryBuilder.svelte` uses it to
    * write back to the `$bindable` `query` prop, which can only be assigned from a component.
@@ -152,18 +115,17 @@ export interface CreateQueryBuilderStateOptions<F extends FullField, O extends s
 /**
  * Builds the reactive state for a query builder.
  *
- * Must be called during component initialization: it installs `$effect`s for the manager
- * subscription and for controlled-mode synchronization.
+ * Must be called during component initialization.
  *
- * The query lives in a {@link QueryManager}. Pass an externally created manager as the
- * `manager` prop to drive the query from outside the component tree.
+ * The query can be driven three ways, and the same state object serves all three:
  *
- * Structural manager options (`fields`, `operators`, `combinators`, and the boolean flags) are
- * applied in place with `QueryManager#reconfigure` whenever the corresponding props change, so
- * the query, the undo/redo history, and every subscriber survive. Function props
- * (`getOperators`, `getDefaultValue`, etc.) are forwarded through closures, so those stay live
- * without any reconfiguration at all. An externally supplied `manager` prop is never
- * reconfigured.
+ * - `bind:query` — the committed query is written back through `options.writeBack`.
+ * - `query` + `onQueryChange` — controlled. The `query` prop always wins: a local mutation that
+ *   the consumer declines to apply is reverted on the next read.
+ * - `defaultQuery`, or nothing at all — uncontrolled.
+ *
+ * Configuration is never "applied" anywhere. Option lists, resolvers, and the schema are all
+ * `$derived` over the props, so a changed prop simply invalidates whatever depended on it.
  */
 export const createQueryBuilderState = <
   F extends FullField = FullField,
@@ -175,18 +137,20 @@ export const createQueryBuilderState = <
   type OName = GetOptionIdentifierType<O>;
   type FName = GetOptionIdentifierType<F>;
 
-  const inheritedContext = options.context ?? getQueryBuilderContext<F, OName>();
+  const getInheritedContext = options.context ?? getQueryBuilderContext<F, OName>();
 
   const config = $derived(
     mergeQueryBuilderConfig<F, OName>({
       props: getProps(),
-      context: inheritedContext,
+      // Called from inside the derivation, so a config change upstream propagates.
+      context: getInheritedContext?.(),
       defaultControls: options.defaultControls,
     }) satisfies MergedQueryBuilderConfig<F, OName>
   );
 
-  // #region Manager
   const initialProps = getProps();
+
+  const idGenerator = (): string => (getProps().idGenerator ?? generateID)();
 
   const maxLevels = $derived(
     (getProps().maxLevels ?? 0) > 0 ? Number(getProps().maxLevels) : Infinity
@@ -194,302 +158,386 @@ export const createQueryBuilderState = <
   const disabledPaths = $derived(
     Array.isArray(getProps().disabled) ? (getProps().disabled as Path[]) : emptyDisabledPaths
   );
+  const queryDisabled = $derived(getProps().disabled === true);
 
-  /**
-   * Forwards a function prop to the manager through a closure, so later changes to the prop take
-   * effect without rebuilding the manager. Returns `undefined` when the prop is absent at
-   * initialization, leaving the manager to apply its own precedence rules instead of treating the
-   * option as configured.
-   */
-  const live = <A extends unknown[], R>(
-    pick: (props: QueryBuilderProps<RuleGroupTypeAny, F, O, FullCombinator>) => unknown
-  ): ((...args: A) => R) | undefined =>
-    typeof pick(initialProps) === 'function'
-      ? (...args: A) => (pick(getProps()) as (...args: A) => R)(...args)
-      : undefined;
-
-  /**
-   * Builds the full option set for the manager. Used both for construction and for every
-   * `reconfigure` call, so the two cannot drift.
-   */
-  const buildManagerOptions = (): QueryManagerOptions<F, O, FullCombinator> => {
-    const props = getProps();
-    return {
-      fields: props.fields,
-      operators: props.operators,
-      combinators: props.combinators,
-      baseField: props.baseField,
-      baseOperator: props.baseOperator,
-      baseCombinator: props.baseCombinator,
-      autoSelectField: config.autoSelectField,
-      autoSelectOperator: config.autoSelectOperator,
-      autoSelectValue: config.autoSelectValue,
-      // The manager prepares every option list, including the placeholder options, so it needs
-      // the merged translations. Everything rendered here reads those lists back off the manager.
-      translations: config.translations,
-      addRuleToNewGroups: config.addRuleToNewGroups,
-      listsAsArrays: config.listsAsArrays,
-      resetOnFieldChange: config.resetOnFieldChange,
-      resetOnOperatorChange: config.resetOnOperatorChange,
-      maxLevels,
-      disabledPaths,
-      queryDisabled: props.disabled === true,
-      history: true,
-      validator: props.validator,
-      idGenerator: props.idGenerator,
-      // Forwarded so that changes to these props take effect without a reconfigure.
-      getDefaultField: (typeof initialProps.getDefaultField === 'function'
-        ? live(p => p.getDefaultField)
-        : props.getDefaultField) as never,
-      getDefaultOperator: (typeof initialProps.getDefaultOperator === 'function'
-        ? live(p => p.getDefaultOperator)
-        : props.getDefaultOperator) as never,
-      getDefaultValue: live(p => p.getDefaultValue) as never,
-      getOperators: live(p => p.getOperators) as never,
-      getValueEditorType: live(p => p.getValueEditorType) as never,
-      getValues: live(p => p.getValues) as never,
-      getValueSources: live(p => p.getValueSources) as never,
-      getMatchModes: live(p => p.getMatchModes) as never,
-      getParameters: live(p => p.getParameters) as never,
-      getInputType: live(p => p.getInputType) as never,
-      getSubQueryBuilderProps: live(p => p.getSubQueryBuilderProps) as never,
-    };
-  };
-
-  /**
-   * The subset of the manager's options that cannot be forwarded through a closure, and so has to
-   * be re-applied with `reconfigure` when it changes. Doubles as the effect's dependency set.
-   */
-  const structuralOptions = () => {
-    const props = getProps();
-    return {
-      fields: props.fields,
-      operators: props.operators,
-      combinators: props.combinators,
-      baseField: props.baseField,
-      baseOperator: props.baseOperator,
-      baseCombinator: props.baseCombinator,
-      autoSelectField: config.autoSelectField,
-      autoSelectOperator: config.autoSelectOperator,
-      autoSelectValue: config.autoSelectValue,
-      translations: config.translations,
-      addRuleToNewGroups: config.addRuleToNewGroups,
-      listsAsArrays: config.listsAsArrays,
-      resetOnFieldChange: config.resetOnFieldChange,
-      resetOnOperatorChange: config.resetOnOperatorChange,
-      maxLevels,
-      disabledPaths,
-      queryDisabled: props.disabled === true,
-    };
-  };
-
-  const manager =
-    (initialProps.manager as QueryManager<RuleGroupTypeAny, F, FullOperator, FullCombinator>) ??
-    new QueryManager<RuleGroupTypeAny, F, O, FullCombinator>(
-      undefined,
-      untrack(() => buildManagerOptions())
-    );
-
-  if (!initialProps.manager) {
-    const candidate = resolveCandidateQuery(
-      {
-        query: initialProps.query,
-        defaultQuery: initialProps.defaultQuery,
-        fallbackQuery: manager.getQuery(),
-      },
-      { idGenerator: initialProps.idGenerator }
-    );
-    if (!Object.is(candidate, manager.getQuery())) {
-      setManagerQuery(manager, candidate);
-      // Seeding the query is not a user action, so it must not be undoable. Without this,
-      // `UndoRedoActions` would render an enabled "undo" button on first paint.
-      manager.clearHistory();
+  // #region Props → core callbacks
+  // The props type keys field and operator names as `GetOptionIdentifierType<F>`/`<O>`, while
+  // core's resolvers take plain strings. The two are assignment-compatible in the value
+  // direction only, so the widening happens once, here, rather than at each of the ~20 call
+  // sites. Read through `getProps()` so a changed callback prop takes effect immediately.
+  const callbacks = $derived(
+    getProps() as unknown as {
+      getDefaultField?: DefaultFieldProp<F>;
+      getDefaultOperator?: DefaultOperatorProp<F>;
+      getDefaultValue?: (rule: RuleType, misc: { fieldData: F }) => unknown;
+      getOperators?: (field: string, misc: { fieldData: F }) => FlexibleOptionList<O> | null;
+      getValueEditorType?: (
+        field: string,
+        operator: string,
+        misc: { fieldData: F }
+      ) => ValueEditorType;
+      getValues?: (
+        field: string,
+        operator: string,
+        misc: { fieldData: F }
+      ) => FlexibleOptionList<Option>;
+      getValueSources?: (
+        field: string,
+        operator: string,
+        misc: { fieldData: F }
+      ) => ValueSourceFullOptions;
+      getMatchModes?: (field: string, misc: { fieldData: F }) => MatchModeOptions;
+      getParameters?: (
+        field: string,
+        operator: string,
+        misc: { fieldData: F }
+      ) => FlexibleOptionList<Option>;
+      getInputType?: (field: string, operator: string, misc: { fieldData: F }) => InputType | null;
+      getSubQueryBuilderProps?: (field: string, misc: { fieldData: F }) => object;
+      getRuleClassname?: (rule: RuleType, misc: { fieldData: F }) => Classname;
+      getRuleGroupClassname?: (ruleGroup: RuleGroupTypeAny) => Classname;
+      onQueryChange?: (query: RuleGroupTypeAny) => void;
     }
-  }
+  );
   // #endregion
 
   // #region Option lists
-  // Read off the manager, which prepares them from the same options—including `translations`,
-  // which supplies the placeholder options when `autoSelect*` is `false`. Keyed on
-  // `configVersion` so that a reconfigure (see below) refreshes them.
-  let configVersion = $state.raw(manager.getConfigVersion());
+  const preparedFields = $derived(
+    prepareOptionList<F>({
+      optionList: getProps().fields,
+      baseOption: getProps().baseField,
+      autoSelectOption: config.autoSelectField,
+      placeholder: config.translations.fields,
+    })
+  );
+  const fields = $derived(preparedFields.optionList);
+  const fieldMap = $derived(preparedFields.optionsMap as Partial<FullOptionRecord<F>>);
 
-  const fields = $derived.by(() => {
-    void configVersion;
-    return manager.getFields();
-  });
-  const combinators = $derived.by(() => {
-    void configVersion;
-    return manager.getCombinators();
-  });
-  const fieldMap = $derived(
-    Object.fromEntries(
-      toFlatOptionArray(fields as FullOptionList<FullOption>).map(f => [f.value ?? f.name, f])
-    ) as Partial<FullOptionRecord<F>>
+  const operators = $derived(
+    prepareOptionList<O>({
+      optionList: (getProps().operators ?? defaultOperators) as FlexibleOptionListProp<O>,
+      baseOption: getProps().baseOperator,
+      labelMap: defaultOperatorLabelMap,
+      autoSelectOption: config.autoSelectOperator,
+      placeholder: config.translations.operators,
+    }).optionList
+  );
+
+  const combinators = $derived(
+    prepareOptionList<FullCombinator>({
+      optionList: (getProps().combinators ??
+        defaultCombinators) as FlexibleOptionListProp<FullCombinator>,
+      baseOption: getProps().baseCombinator,
+    }).optionList
   );
   // #endregion
 
   // #region Resolvers
+  // Direct ports of `QueryManager`'s private resolution methods. Each is a plain function over
+  // `$derived` values rather than a `$derived` itself, since they take arguments.
+  const fieldDataFor = (field: string): F => getFieldData(field, fieldMap) as F;
+
+  const getOperators = (field: string): FullOptionList<O> =>
+    resolveOperatorList<F, O>({
+      field,
+      fieldData: fieldDataFor(field),
+      getOperators: callbacks.getOperators,
+      operators,
+      baseOption: getProps().baseOperator,
+      autoSelectOption: config.autoSelectOperator,
+      placeholder: config.translations.operators,
+    });
+
+  const getRuleDefaultOperator = (field: string): string =>
+    resolveDefaultOperator<F>({
+      field,
+      fieldData: fieldDataFor(field),
+      getDefaultOperator: callbacks.getDefaultOperator,
+      getOperators,
+    });
+
+  const getValueSources = (field: string, operator: string): ValueSourceFullOptions =>
+    getValueSourcesUtil<F, string>(fieldDataFor(field), operator, callbacks.getValueSources);
+
+  const getMatchModes = (field: string): MatchModeOptions =>
+    getMatchModesUtil<F>(fieldDataFor(field), callbacks.getMatchModes);
+
+  const getValues = (field: string, operator: string): FullOptionList<Option> =>
+    resolveValueList<F>({
+      field,
+      operator,
+      fieldData: fieldDataFor(field),
+      getValues: callbacks.getValues,
+      autoSelectOption: config.autoSelectValue,
+      placeholder: config.translations.values,
+    });
+
+  const getValueEditorType = (field: string, operator: string): ValueEditorType =>
+    resolveValueEditorType<F>({
+      field,
+      operator,
+      fieldData: fieldDataFor(field),
+      getValueEditorType: callbacks.getValueEditorType,
+    });
+
   const getParameters = (
     field?: string,
     operator?: string,
     misc?: { fieldData: F }
   ): FullOptionList<FullOption> =>
     prepareOptionList<FullOption>({
-      optionList: getProps().getParameters?.(field as FName, operator as OName, misc) ?? [],
+      optionList: (callbacks.getParameters?.(field!, operator!, misc!) ??
+        []) as FlexibleOptionListProp<FullOption>,
+      // Deliberately not `autoSelectValue`: a parameter list is never given a placeholder
+      // option, since an empty parameter list must stay empty.
       autoSelectOption: true,
     }).optionList;
 
-  const getOperators = (field: string): FullOptionList<O> =>
-    manager.getOperators(field) as FullOptionList<O>;
-
-  const getValueEditorType = (field: string, operator: string): ValueEditorType =>
-    manager.getValueEditorType(field, operator);
-
-  const getValues = (field: string, operator: string): FullOptionList<Option> =>
-    manager.getValues(field, operator);
-
-  const getValueSources = (field: string, operator: string): ValueSourceFullOptions =>
-    manager.getValueSources(field, operator);
-
-  const getMatchModes = (field: string): MatchModeOptions => manager.getMatchModes(field);
+  const getRuleDefaultValueMain = (rule: RuleType): unknown =>
+    getRuleDefaultValue<F>(rule, {
+      fieldData: fieldDataFor(rule.field),
+      fields,
+      listsAsArrays: config.listsAsArrays,
+      getValueEditorType,
+      getValues,
+      getDefaultValue: callbacks.getDefaultValue,
+      getParameters: callbacks.getParameters && getParameters,
+    });
 
   const getInputType = (
     field: string,
     operator: string,
-    { fieldData }: { fieldData: F }
-  ): InputType | null =>
-    getProps().getInputType?.(field as FName, operator as OName, { fieldData }) ?? 'text';
+    misc: { fieldData: F }
+  ): InputType | null => callbacks.getInputType?.(field, operator, misc) ?? 'text';
 
   const getSubQueryBuilderProps = (
     field: string,
     misc: { fieldData: F }
     // oxlint-disable-next-line typescript/no-explicit-any
-  ): any => getProps().getSubQueryBuilderProps?.(field as FName, misc) ?? {};
+  ): any => callbacks.getSubQueryBuilderProps?.(field, misc) ?? {};
 
-  // The manager computes rule defaults internally for `createRule`; these expose the same
-  // derivation to the schema, so they must stay in sync with the manager's option lists.
-  const getRuleDefaultValueMain = (rule: RuleType): unknown =>
-    getRuleDefaultValue<F>(rule, {
-      fieldData: manager.getFieldData(rule.field),
+  const createRuleMain = (): RuleType =>
+    createRule<F>({
       fields,
-      getParameters,
-      getValueEditorType,
-      getValues,
-      listsAsArrays: config.listsAsArrays,
-      getDefaultValue: getProps().getDefaultValue as never,
+      getDefaultField: callbacks.getDefaultField,
+      getRuleDefaultOperator,
+      getValueSources,
+      getMatchModes,
+      getRuleDefaultValue: getRuleDefaultValueMain,
+      idGenerator,
     });
 
-  const getRuleDefaultOperator = (field: string): string =>
-    resolveDefaultOperator<F>({
-      field,
-      fieldData: manager.getFieldData(field),
-      getDefaultOperator: getProps().getDefaultOperator as never,
-      getOperators,
-    });
+  const createRuleGroupMain = (independentCombinatorsArg?: boolean): RuleGroupTypeAny =>
+    createRuleGroup<FullCombinator>(
+      {
+        combinators,
+        addRuleToNewGroups: config.addRuleToNewGroups,
+        createRule: createRuleMain,
+        idGenerator,
+      },
+      independentCombinatorsArg
+    );
   // #endregion
 
   // #region Query state
-  // `$state.raw`, not `$state`: queries are immutable and are replaced wholesale, and a deep
-  // proxy would both defeat reference comparison and be rejected by the manager's deep freeze.
-  let query = $state.raw<RuleGroupTypeAny>(manager.getQuery());
-  let hasNotifiedMount = false;
-  // A non-reactive mirror of `query`. The subscription callback runs synchronously inside
-  // whichever effect triggered the mutation, so reading `query` there would make that effect
-  // depend on the state it just caused to change.
-  let committed = manager.getQuery();
+  const seededQuery = resolveCandidateQuery(
+    {
+      query: initialProps.query,
+      defaultQuery: initialProps.defaultQuery,
+      fallbackQuery: createRuleGroupMain(),
+    },
+    { idGenerator }
+  );
 
-  const commit = (nextQuery: RuleGroupTypeAny) => {
-    query = nextQuery;
-    committed = nextQuery;
-    getProps().onQueryChange?.(nextQuery as never);
-    options.writeBack?.(nextQuery);
+  /**
+   * Whether the initial query was created or normalized here rather than handed over ready to
+   * use. If so the consumer has never seen it, so it is emitted once during initialization —
+   * that is the entire job the `enableMountQueryChange` prop used to do, minus the flag.
+   * `RuleSubQuery` relies on it to seed a match-mode rule's `value`.
+   */
+  const wasSeeded = !Object.is(seededQuery, initialProps.query ?? initialProps.defaultQuery);
+
+  /**
+   * The locally committed query. `$state.raw` because queries are immutable and replaced
+   * wholesale: a deep proxy would defeat the reference comparisons below for no benefit.
+   */
+  let local = $state.raw<RuleGroupTypeAny>(seededQuery);
+
+  /**
+   * The derivation's memory: the last value {@link query} resolved to, plus the last `query`
+   * prop and last local commit it saw. Plain variables rather than state — they are written from
+   * inside the derivation, which is only legal because nothing reads them reactively. They exist
+   * so the derivation can tell "the prop changed" from "the local query changed" without an
+   * `$effect` mirroring one into the other.
+   */
+  let lastResolved: RuleGroupTypeAny = seededQuery;
+  let lastPropQuery = initialProps.query;
+  let lastLocal = seededQuery;
+
+  /**
+   * The query to render.
+   *
+   * The `query` prop is an *input*, not the authority: it wins whenever it changes, and local
+   * commits stand in between. That covers every driving mode — a controlled consumer updates the
+   * prop from `onQueryChange`, an uncontrolled one never passes it at all, and `bind:query` does
+   * both.
+   *
+   * The signature check is what keeps `bind:query` from thrashing. A parent holding the query in
+   * deep `$state` hands back a reactive proxy of the very object just emitted, so reference
+   * equality alone would not recognize it; `unchangedSignature` means "no observable
+   * difference", in which case the current object is kept and identity is preserved.
+   */
+  const query = $derived.by<RuleGroupTypeAny>(() => {
+    const committed = local;
+    const incoming = getProps().query;
+
+    // A local commit since the last resolution supersedes whatever was resolved then.
+    if (!Object.is(committed, lastLocal)) {
+      lastLocal = committed;
+      lastResolved = committed;
+    }
+
+    if (
+      incoming &&
+      !Object.is(incoming, lastPropQuery) &&
+      !Object.is(incoming, lastResolved) &&
+      signatureOf(lastResolved, incoming) !== unchangedSignature
+    ) {
+      lastResolved = incoming.id ? incoming : prepareRuleGroup(incoming, { idGenerator });
+    }
+
+    lastPropQuery = incoming;
+    return lastResolved;
+  });
+  // #endregion
+
+  // #region History
+  // `past` oldest first, `future` newest first, mirroring `QueryManager.getHistory`. Coalescing
+  // is core's `shouldCoalesce`, so the two implementations cannot drift.
+  let past = $state.raw<RuleGroupTypeAny[]>([]);
+  let future = $state.raw<RuleGroupTypeAny[]>([]);
+  let lastSig: string | undefined;
+  let lastAt = 0;
+
+  const record = (prev: RuleGroupTypeAny, next: RuleGroupTypeAny): void => {
+    const sig = signatureOf(prev, next);
+    // The object changed but nothing observable did, so an entry would appear to do nothing.
+    if (sig === unchangedSignature) return;
+
+    const now = Date.now();
+    if (!shouldCoalesce(lastSig, sig, lastAt, now)) {
+      past = [...past, prev].slice(-defaultMaxHistory);
+      future = [];
+    }
+    lastSig = sig;
+    lastAt = now;
   };
 
-  // Subscribe once, on mount. Nothing in here is tracked: the body both reads and writes
-  // `query`, so tracking it would make the effect retrigger itself.
-  $effect(() =>
-    untrack(() => {
-      const unsubscribe = manager.subscribe(() => {
-        // A reconfigure notifies without touching the query. Refresh the config version
-        // unconditionally, but only commit—and therefore only fire `onQueryChange`—when the
-        // query actually changed.
-        configVersion = manager.getConfigVersion();
-        const nextQuery = manager.getQuery();
-        if (!Object.is(nextQuery, committed)) {
-          commit(nextQuery);
-        }
-      });
+  /** Applies a query and notifies, without touching the history stacks. */
+  const emit = (next: RuleGroupTypeAny): void => {
+    local = next;
+    callbacks.onQueryChange?.(next);
+    options.writeBack?.(next);
+  };
 
-      // Catch up on anything that changed between initialization and mount.
-      if (!Object.is(query, manager.getQuery())) {
-        commit(manager.getQuery());
-      } else if (!hasNotifiedMount && config.enableMountQueryChange) {
-        hasNotifiedMount = true;
-        getProps().onQueryChange?.(query as never);
-        options.writeBack?.(query);
-      }
+  /** Applies a query as a user action: recorded in the history, then emitted. */
+  const commit = (next: RuleGroupTypeAny): void => {
+    const prev = query;
+    if (Object.is(prev, next)) return;
+    record(prev, next);
+    emit(next);
+  };
 
-      return unsubscribe;
+  const history: QueryHistory = {
+    get canUndo() {
+      return past.length > 0;
+    },
+    get canRedo() {
+      return future.length > 0;
+    },
+    undo() {
+      if (past.length === 0) return;
+      future = [query, ...future];
+      const restored = past.at(-1)!;
+      past = past.slice(0, -1);
+      // Prevent the next change from coalescing into the restored entry.
+      lastSig = undefined;
+      emit(restored);
+    },
+    redo() {
+      if (future.length === 0) return;
+      past = [...past, query];
+      const restored = future[0];
+      future = future.slice(1);
+      lastSig = undefined;
+      emit(restored);
+    },
+    clear() {
+      past = [];
+      future = [];
+      lastSig = undefined;
+    },
+  };
+  // #endregion
+
+  // #region Actions
+  // Core owns the whole policy layer here: disabled/`maxLevels` gating, the confirmation
+  // callback protocol, and debug logging. `freeze: false` because the query may contain Svelte
+  // `$state` proxies (a parent's deeply reactive query, or a value produced by `getDefaultValue`),
+  // and immer's deep freeze throws on those.
+  const handlers = $derived(
+    createQueryActions({
+      combinators,
+      idGenerator,
+      maxLevels,
+      queryDisabled,
+      disabledPaths,
+      resetOnFieldChange: config.resetOnFieldChange,
+      resetOnOperatorChange: config.resetOnOperatorChange,
+      getRuleDefaultOperator,
+      getValueSources,
+      getRuleDefaultValue: getRuleDefaultValueMain,
+      getMatchModes,
+      freeze: false,
+      onAddRule: getProps().onAddRule,
+      onAddGroup: getProps().onAddGroup,
+      onRemove: getProps().onRemove,
+      onMoveRule: getProps().onMoveRule,
+      onMoveGroup: getProps().onMoveGroup,
+      onGroupRule: getProps().onGroupRule,
+      onGroupGroup: getProps().onGroupGroup,
+      onLog: config.debugMode ? (getProps().onLog ?? console.log) : undefined,
     })
   );
 
-  // Controlled mode: a new `query` prop is pushed into the manager. The guard—reference
-  // equality first, then a structural signature—is what prevents a feedback loop with the
-  // subscription above. Reference equality alone is not enough: a parent that stores the query
-  // in `$state` hands back a deeply reactive proxy of the very object we just emitted.
-  $effect(() => {
-    const nextQuery = getProps().query;
-    if (
-      nextQuery &&
-      !Object.is(nextQuery, manager.getQuery()) &&
-      manager.signatureOf(nextQuery) !== unchangedSignature
-    ) {
-      setManagerQuery(manager, nextQuery);
-    }
-  });
+  /** Applies a handler's result, treating `undefined` (aborted) as a no-op. */
+  const applyResult = (next: RuleGroupTypeAny | undefined): void => {
+    if (next !== undefined) commit(next);
+  };
 
-  // Structural options are applied in place, so the query, the undo/redo history, and every
-  // subscriber survive a config change. Skipped for an externally supplied manager: that one
-  // belongs to the consumer.
-  if (!initialProps.manager) {
-    let appliedSignature = untrack(() => structuralOptions());
-
-    $effect(() => {
-      // Reading the signature is what registers the dependencies: the structural props plus the
-      // parts of `config` the manager consumes. Function props are deliberately excluded—they
-      // reach the manager through `live()` closures and stay current on their own, and comparing
-      // them would defeat the equality gate below for anyone passing inline arrows.
-      const next = structuralOptions();
-      if (valuesEqual(next, appliedSignature)) return;
-      appliedSignature = next;
-
-      untrack(() => {
-        const nextOptions = buildManagerOptions();
-        try {
-          manager.reconfigure(nextOptions);
-        } catch {
-          // Same problem as `setManagerQuery`: the manager freezes the option lists, which
-          // throws for a deeply reactive `$state` proxy. Every key is present in the rebuilt
-          // options, so re-applying from a snapshot fully overwrites the partial attempt.
-          manager.reconfigure({
-            ...nextOptions,
-            fields: $state.snapshot(nextOptions.fields) as typeof nextOptions.fields,
-            operators: $state.snapshot(nextOptions.operators) as typeof nextOptions.operators,
-            combinators: $state.snapshot(nextOptions.combinators) as typeof nextOptions.combinators,
-            disabledPaths: $state.snapshot(nextOptions.disabledPaths) as Path[],
-          });
-        }
-      });
-    });
-  }
+  const actions: QueryActions = {
+    onRuleAdd: (rule, parentPath, context) =>
+      applyResult(handlers.addRule(query, rule, parentPath, context)),
+    onGroupAdd: (group, parentPath, context) =>
+      applyResult(handlers.addGroup(query, group, parentPath, context)),
+    onPropChange: (prop, value, path) => applyResult(handlers.propChange(query, prop, value, path)),
+    // The `context` parameter is optional in every case, which is what makes these assignable
+    // to core's `QueryActions` signatures — several of which declare no `context` at all.
+    // oxlint-disable-next-line typescript/no-explicit-any
+    onRuleRemove: (path: Path, context?: any) =>
+      applyResult(handlers.removeRuleOrGroup(query, path, context)),
+    // oxlint-disable-next-line typescript/no-explicit-any
+    onGroupRemove: (path: Path, context?: any) =>
+      applyResult(handlers.removeRuleOrGroup(query, path, context)),
+    moveRule: (oldPath, newPath, clone, context) =>
+      applyResult(handlers.moveRule(query, oldPath, newPath, clone, context)),
+    groupRule: (sourcePath, targetPath, clone, context) =>
+      applyResult(handlers.groupRule(query, sourcePath, targetPath, clone, context)),
+  };
   // #endregion
-
-  const actions = createActions(getProps, manager);
 
   // #region Derived config
   const independentCombinators = $derived(isRuleGroupTypeIC(query));
-  const queryDisabled = $derived(getProps().disabled === true);
   const rootGroupDisabled = $derived(!!query.disabled || disabledPaths.some(p => p.length === 0));
 
   const validationResult = $derived.by(() => {
@@ -515,21 +563,16 @@ export const createQueryBuilderState = <
   // #endregion
 
   const schema = $derived<Schema<F, OName>>({
-    manager: manager as unknown as QueryManager<
-      RuleGroupTypeAny,
-      FullField,
-      FullOperator,
-      FullCombinator
-    >,
     fields,
     fieldMap: fieldMap as Schema<F, OName>['fieldMap'],
     classNames: config.classNames,
     combinators,
     controls: config.controls,
+    history,
     getParameters,
-    createRule: () => manager.createRule(),
-    createRuleGroup: (ic?: boolean) => manager.createRuleGroup(ic ?? independentCombinators),
-    getQuery: manager.getQuery,
+    createRule: createRuleMain,
+    createRuleGroup: (ic?: boolean) => createRuleGroupMain(ic ?? independentCombinators),
+    getQuery: () => query,
     getOperators: getOperators as Schema<F, OName>['getOperators'],
     getValueEditorType,
     getValueEditorSeparator: (field, operator, misc) =>
@@ -538,17 +581,17 @@ export const createQueryBuilderState = <
         operator as OName,
         misc
       ),
-    getValueSources: (field, operator) => getValueSources(field, operator),
+    getValueSources,
     getInputType,
     getValues,
     getRuleDefaultValue: getRuleDefaultValueMain,
     getRuleDefaultOperator,
-    getMatchModes: (field: string) => getMatchModes(field),
+    getMatchModes,
     getSubQueryBuilderProps,
     getRuleClassname: (rule, misc) =>
-      (getProps().getRuleClassname ?? defaultGetRuleOrGroupClassname)(rule as never, misc),
+      (callbacks.getRuleClassname ?? defaultGetRuleOrGroupClassname)(rule, misc),
     getRuleGroupClassname: ruleGroup =>
-      (getProps().getRuleGroupClassname ?? defaultGetRuleOrGroupClassname)(ruleGroup as never),
+      (callbacks.getRuleGroupClassname ?? defaultGetRuleOrGroupClassname)(ruleGroup),
     accessibleDescriptionGenerator:
       getProps().accessibleDescriptionGenerator ?? generateAccessibleDescription,
     showCombinatorsBetweenRules: config.showCombinatorsBetweenRules,
@@ -579,7 +622,6 @@ export const createQueryBuilderState = <
     controlClassnames: config.classNames,
     translations: config.translations,
     debugMode: config.debugMode,
-    enableMountQueryChange: config.enableMountQueryChange,
     showCombinatorsBetweenRules: config.showCombinatorsBetweenRules,
     showNotToggle: config.showNotToggle,
     showShiftActions: config.showShiftActions,
@@ -597,6 +639,13 @@ export const createQueryBuilderState = <
     suppressStandardClassnames: config.suppressStandardClassnames,
   });
 
+  // A seeded query has never been seen by the consumer, so hand it over. Deliberately last, so
+  // the callback observes a fully constructed state object.
+  if (wasSeeded) {
+    callbacks.onQueryChange?.(seededQuery);
+    options.writeBack?.(seededQuery);
+  }
+
   return {
     get query() {
       return query;
@@ -604,14 +653,14 @@ export const createQueryBuilderState = <
     get rootGroup() {
       return query;
     },
-    get manager() {
-      return manager as QueryManager<RuleGroupTypeAny, F, FullOperator, FullCombinator>;
-    },
     get schema() {
       return schema;
     },
     get actions() {
       return actions;
+    },
+    get history() {
+      return history;
     },
     get translations() {
       return config.translations;
