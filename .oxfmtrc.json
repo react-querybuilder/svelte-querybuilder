@@ -1,6 +1,9 @@
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
   "printWidth": 100,
+  // Default "css" treats block elements as whitespace-insensitive and splits the `<!-- -->`
+  // joiners in RuleGroup et al. onto their own lines, adding text nodes RQB never emits.
+  "htmlWhitespaceSensitivity": "strict",
   "tabWidth": 2,
   "useTabs": false,
   "semi": true,
