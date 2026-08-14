@@ -85,8 +85,8 @@
           return parts.disabled;
         },
       })} />
-  {/if}
-  {#if typeof r === 'string'}
+  {/if}<!--
+  -->{#if typeof r === 'string'}
     <Control
       control={controls.inlineCombinator}
       props={withCommonProps(inlineCommon, {

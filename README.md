@@ -1,6 +1,6 @@
 # svelte-querybuilder
 
-A Svelte 5 port of [React Query Builder](https://react-querybuilder.js.org). Builds a nested query structure from a field/operator/value UI, backed by [`@react-querybuilder/core`](https://www.npmjs.com/package/@react-querybuilder/core).
+A Svelte 5 query builder: a nested query structure built from a field/operator/value UI, backed by [`@react-querybuilder/core`](https://www.npmjs.com/package/@react-querybuilder/core) — the same logic layer [React Query Builder](https://react-querybuilder.js.org) runs on, so query shapes, formatters, and parsers behave identically and the rendered DOM is class-compatible. The component API is Svelte's own.
 
 ## Install
 
@@ -61,15 +61,18 @@ The DOM is class-compatible with React Query Builder, so existing RQB stylesheet
 
 ## Docs
 
-- [Differences from React Query Builder](./docs/differences-from-react-querybuilder.md)
-- [Customization](./docs/customization.md)
+**Coming from React Query Builder?** Read [Differences from React Query Builder](./docs/differences-from-react-querybuilder.md) first. Your queries, field configuration, and CSS carry over unchanged; the component API is Svelte's, not React's.
+
+- [Differences from React Query Builder](./docs/differences-from-react-querybuilder.md) — start here if you know RQB
+- [Customization](./docs/customization.md) — snippets, `controls`, translations, context
 - [Styling](./docs/styling.md)
 - Concepts, field/operator configuration, query formats, and parsers: the [React Query Builder documentation](https://react-querybuilder.js.org/docs/intro) applies directly, since the logic layer is shared.
 
 ## Examples
 
-- [`examples/demo`](./examples/demo) — Vite + Svelte, running against library source. `bun run --filter @svelte-querybuilder/example-demo dev`
 - [`examples/sveltekit`](./examples/sveltekit) — SvelteKit, server-side rendering. Doubles as the repo's SSR gate (`bun run test:ssr`).
+
+The development playground lives in the library package itself (`packages/svelte-querybuilder/src/routes`) and runs against library source: `bun run dev`.
 
 ## Non-goals
 

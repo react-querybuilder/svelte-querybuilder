@@ -15,7 +15,12 @@
 
 import { cleanup } from '@testing-library/svelte';
 import { afterEach, describe, expect, it } from 'vitest';
-import { loadFixture, renderAndExtractPostFlush, renderPairs } from './cases';
+import {
+  loadFixture,
+  renderAndExtractPostFlush,
+  renderPairs,
+  stripUnrecordedChannels,
+} from './cases';
 import type { ClassNameEntry } from './extract';
 
 interface PostFlushFixture {
@@ -57,14 +62,15 @@ describe('conformance: classnames (post-flush)', () => {
 
     it(`${expected.scenario} × ${expected.query}`, async () => {
       const { classNames } = await renderAndExtractPostFlush(pair);
+      const recorded = stripUnrecordedChannels(classNames, fixture);
 
-      expect(classNames).toEqual(expected.classNames);
+      expect(recorded).toEqual(expected.classNames);
 
       if (expected.differsFromStatic) {
         // A port that never runs its reset effect would pass both layers without this.
-        expect(classNames).not.toEqual(staticEntry.classNames);
+        expect(recorded).not.toEqual(staticEntry.classNames);
       } else {
-        expect(classNames).toEqual(staticEntry.classNames);
+        expect(recorded).toEqual(staticEntry.classNames);
       }
     });
   }

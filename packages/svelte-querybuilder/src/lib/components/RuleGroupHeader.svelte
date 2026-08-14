@@ -1,10 +1,3 @@
-<!--
-  @component
-  The controls in a rule group's header, without the wrapping `<div>`.
-
-  Port of React Query Builder's `RuleGroupHeaderComponents`. Internal rather than a control
-  element; it is a separate component only so that `Rule` can reuse it for a subquery.
--->
 <script lang="ts">
   import { TestID } from '@react-querybuilder/core';
   import Control from '../internal/Control.svelte';
@@ -291,31 +284,43 @@
   });
 </script>
 
+<!--
+  @component
+  The controls in a rule group's header, without the wrapping `<div>`.
+
+  Port of React Query Builder's `RuleGroupHeaderComponents`. Internal rather than a control
+  element; it is a separate component only so that `Rule` can reuse it for a subquery.
+
+  The empty-HTML-comment joiners between siblings suppress the whitespace text nodes Svelte would
+  otherwise emit between them — see `RuleComponents.svelte` for why that matters. -->
+
 {#if schema.showShiftActions && path.length > 0}
   <Control control={controls.shiftActions} props={shiftActionsProps} />
-{/if}
-{#if !schema.showCombinatorsBetweenRules && !schema.independentCombinators}
+{/if}<!--
+-->{#if !schema.showCombinatorsBetweenRules && !schema.independentCombinators}
   <Control control={controls.combinatorSelector} props={combinatorSelectorProps} />
-{/if}
-{#if schema.showNotToggle}
+{/if}<!--
+-->{#if schema.showNotToggle}
   <Control control={controls.notToggle} props={notToggleProps} />
-{/if}
-<Control control={controls.addRuleAction} props={addRuleActionProps} />
-{#if schema.maxLevels > path.length}
+{/if}<!--
+--><Control
+  control={controls.addRuleAction}
+  props={addRuleActionProps} /><!--
+-->{#if schema.maxLevels > path.length}
   <Control control={controls.addGroupAction} props={addGroupActionProps} />
-{/if}
-{#if schema.showCloneButtons && path.length > 0}
+{/if}<!--
+-->{#if schema.showCloneButtons && path.length > 0}
   <Control control={controls.cloneGroupAction} props={cloneGroupActionProps} />
-{/if}
-{#if schema.showLockButtons}
+{/if}<!--
+-->{#if schema.showLockButtons}
   <Control control={controls.lockGroupAction} props={lockGroupActionProps} />
-{/if}
-{#if schema.showMuteButtons}
+{/if}<!--
+-->{#if schema.showMuteButtons}
   <Control control={controls.muteGroupAction} props={muteGroupActionProps} />
-{/if}
-{#if schema.showUndoRedo && path.length === 0}
+{/if}<!--
+-->{#if schema.showUndoRedo && path.length === 0}
   <Control control={controls.undoRedoActions} props={undoRedoActionsProps} />
-{/if}
-{#if path.length > 0}
+{/if}<!--
+-->{#if path.length > 0}
   <Control control={controls.removeGroupAction} props={removeGroupActionProps} />
 {/if}

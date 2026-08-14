@@ -23,6 +23,19 @@ export interface ClassNameEntry {
   path?: string;
   /** The verbatim `class` attribute. Whitespace is preserved; this is a byte-level claim. */
   className: string;
+  /**
+   * The concatenation of this element's *own* direct text-node children, verbatim — no trimming,
+   * no whitespace collapsing, no descendant text. `''` when the element has no direct text nodes
+   * (present rather than omitted, so the key set is stable across entries).
+   *
+   * Verbatim is the point: the drift this channel catches is a stray space inside a label or a
+   * whitespace text node emitted by a template compiler — exactly the SFC-whitespace hazard, and
+   * invisible under any normalization (jest-dom's `toHaveTextContent` included). Descendant text
+   * is deliberately excluded: `textContent` would repeat one label at every ancestor level.
+   *
+   * Recorded only by `schemaVersion` 3 fixtures; see `stripUnrecordedChannels` in `cases.ts`.
+   */
+  text: string;
 }
 
 /** The accessible description (`title`) of one rule group. */
@@ -65,6 +78,12 @@ export const extract = (container: Element): ExtractResult => {
         ...(testID === undefined ? {} : { testID }),
         ...(path === undefined ? {} : { path }),
         className,
+        // Direct text-node children only, in document order. `Node.TEXT_NODE` is spelled `3`
+        // rather than referenced off the constructor, matching upstream.
+        text: [...element.childNodes]
+          .filter(node => node.nodeType === 3)
+          .map(node => node.nodeValue ?? '')
+          .join(''),
       });
     }
 

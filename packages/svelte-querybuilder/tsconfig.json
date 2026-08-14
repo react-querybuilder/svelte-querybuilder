@@ -1,9 +1,26 @@
 {
-  "extends": "../../tsconfig.base.json",
+  // Extends the SvelteKit-generated config (run `svelte-kit sync` first, which `check` does),
+  // not `tsconfig.base.json` -- Kit owns `$lib`, `rootDirs`, and module resolution for the
+  // playground under `src/routes`. The options below restate the ones this monorepo cares
+  // about that Kit's generated config does not set.
+  "extends": "./.svelte-kit/tsconfig.json",
   "compilerOptions": {
+    "checkJs": true,
+    "declaration": true,
+    "strict": true,
+    "verbatimModuleSyntax": true,
+    // `@react-querybuilder/core`'s declarations carry type-only imports of its optional
+    // integrations (`drizzle-orm`, `sequelize`, `@tanstack/db`), none of which are installed.
+    "skipLibCheck": true,
     "types": ["vitest/globals", "@testing-library/jest-dom", "bun"]
   },
+  // Kit's generated `include` covers `src` and its own generated types; the test harness and
+  // scripts live outside it and must be added back. Paths are relative to this file, whereas
+  // the inherited ones are relative to `.svelte-kit` -- hence the duplication.
   "include": [
+    ".svelte-kit/ambient.d.ts",
+    ".svelte-kit/non-ambient.d.ts",
+    ".svelte-kit/types/**/$types.d.ts",
     "src/**/*.ts",
     "src/**/*.js",
     "src/**/*.svelte",

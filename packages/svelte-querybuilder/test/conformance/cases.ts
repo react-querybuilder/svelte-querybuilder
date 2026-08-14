@@ -8,7 +8,7 @@ import * as path from 'node:path';
 import { render } from '@testing-library/svelte';
 import { tick, type ComponentProps } from 'svelte';
 import { QueryBuilder } from '../../src/lib';
-import { extract, type ExtractResult } from './extract';
+import { extract, type ClassNameEntry, type ExtractResult } from './extract';
 import { queries, type QueryFixtureName } from './queries';
 import { scenarios, type Scenario } from './scenarios';
 
@@ -37,8 +37,27 @@ export const loadFixture = async <T>(name: string): Promise<T & FixtureMeta> => 
   }
 };
 
-/** One scenario × query pair, in the order `generate.tsx` flattened them. */
-export interface RenderPair {
+/** The first fixture schema that records the per-element `text` channel. */
+export const TEXT_CHANNEL_SCHEMA_VERSION = 3;
+
+/**
+ * Narrows extracted entries to the channels the loaded fixtures actually recorded.
+ *
+ * The extractor always emits `text`, because that is the shape upstream settled on. Fixtures
+ * older than `schemaVersion` 3 have no such key, and deep equality against them would fail on a
+ * channel they never claimed anything about — so it is dropped rather than asserted. Bumping
+ * `CONFORMANCE_TAG` to a release that publishes schema 3 turns the channel on with no further
+ * change here; review that first diff rather than suppressing it.
+ */
+export const stripUnrecordedChannels = (
+  entries: ClassNameEntry[],
+  { schemaVersion }: FixtureMeta
+): ClassNameEntry[] =>
+  schemaVersion >= TEXT_CHANNEL_SCHEMA_VERSION
+    ? entries
+    : entries.map(({ text: _text, ...rest }) => rest as ClassNameEntry);
+
+/** One scenario × query pair, in the order `generate.tsx` flattened them. */ export interface RenderPair {
   scenario: Scenario;
   queryName: string;
   query: unknown;

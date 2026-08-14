@@ -1,11 +1,3 @@
-<!--
-  @component
-  The controls that make up a rule, without the wrapping `<div>`.
-
-  Port of React Query Builder's `RuleComponents`. When `subQuery`/`subQueryProps` are supplied
-  (by `RuleSubQuery.svelte`), the subquery's group header and body are rendered in `<div>`s
-  around the rule's own action buttons.
--->
 <script lang="ts">
   import { TestID } from '@react-querybuilder/core';
   import Control from '../internal/Control.svelte';
@@ -16,22 +8,29 @@
   import RuleGroupBody from './RuleGroupBody.svelte';
   import RuleGroupHeader from './RuleGroupHeader.svelte';
 
-  const {
-    props,
-    parts,
-    subQueryProps,
-    subQueryParts,
-  }: {
-    props: RuleProps;
-    parts: RuleParts;
-    subQueryProps?: RuleGroupProps;
-    subQueryParts?: RuleGroupParts;
-  } = $props();
+  /**
+   * `mode` is the discriminator, not the presence of `subQuery`: in `subQuery` mode the rule
+   * renders a `matchModeEditor` instead of the operator/value controls, and that choice is a
+   * statement about the rule, not a side effect of having been handed a second state.
+   */
+  type Props =
+    | { mode: 'rule'; rule: { props: RuleProps; parts: RuleParts }; subQuery?: never }
+    | {
+        mode: 'subQuery';
+        rule: { props: RuleProps; parts: RuleParts };
+        subQuery: { props: RuleGroupProps; parts: RuleGroupParts };
+      };
 
-  const schema = $derived(props.schema);
-  const rule = $derived(props.rule);
-  const translations = $derived(props.translations);
-  const path = $derived(props.path);
+  const { mode, rule, subQuery }: Props = $props();
+
+  const ruleProps = $derived(rule.props);
+  const parts = $derived(rule.parts);
+
+  const schema = $derived(ruleProps.schema);
+  /** The `RuleType` itself, as distinct from the `rule` prop, which is its props/parts pair. */
+  const ruleObj = $derived(ruleProps.rule);
+  const translations = $derived(ruleProps.translations);
+  const path = $derived(ruleProps.path);
   const classNames = $derived(parts.classNames);
   const ctx = $derived(parts.ctx);
 
@@ -51,7 +50,7 @@
       return parts.disabled;
     },
     get context() {
-      return props.context;
+      return ruleProps.context;
     },
     get validation() {
       return ctx.validationResult;
@@ -60,7 +59,7 @@
       return schema;
     },
     get rule() {
-      return rule;
+      return ruleObj;
     },
   };
 
@@ -88,7 +87,7 @@
       return classNames.shiftActions;
     },
     get ruleOrGroup() {
-      return rule;
+      return ruleObj;
     },
     get shiftUp() {
       return parts.shiftRuleUp;
@@ -97,10 +96,10 @@
       return parts.shiftRuleDown;
     },
     get shiftUpDisabled() {
-      return props.shiftUpDisabled;
+      return ruleProps.shiftUpDisabled;
     },
     get shiftDownDisabled() {
-      return props.shiftDownDisabled;
+      return ruleProps.shiftDownDisabled;
     },
   });
 
@@ -113,10 +112,10 @@
       return translations.fields.title;
     },
     get value() {
-      return rule.field;
+      return ruleObj.field;
     },
     get operator() {
-      return rule.operator;
+      return ruleObj.operator;
     },
     get className() {
       return classNames.fields;
@@ -129,7 +128,7 @@
   const matchModeEditorProps = withCommonProps(common, {
     testID: TestID.matchModeEditor,
     get field() {
-      return rule.field;
+      return ruleObj.field;
     },
     get fieldData() {
       return parts.fieldData;
@@ -144,7 +143,7 @@
       return translations.matchThreshold.placeholderName;
     },
     get match() {
-      return rule.match ?? { mode: 'all' };
+      return ruleObj.match ?? { mode: 'all' };
     },
     get className() {
       return classNames.matchMode;
@@ -160,7 +159,7 @@
   const operatorSelectorProps = withCommonProps(common, {
     testID: TestID.operators,
     get field() {
-      return rule.field;
+      return ruleObj.field;
     },
     get fieldData() {
       return parts.fieldData;
@@ -172,7 +171,7 @@
       return ctx.operators;
     },
     get value() {
-      return rule.operator;
+      return ruleObj.operator;
     },
     get className() {
       return classNames.operators;
@@ -185,7 +184,7 @@
   const valueSourceSelectorProps = withCommonProps(common, {
     testID: TestID.valueSourceSelector,
     get field() {
-      return rule.field;
+      return ruleObj.field;
     },
     get fieldData() {
       return parts.fieldData;
@@ -197,7 +196,7 @@
       return ctx.valueSourceOptions;
     },
     get value() {
-      return rule.valueSource ?? 'value';
+      return ruleObj.valueSource ?? 'value';
     },
     get className() {
       return classNames.valueSource;
@@ -210,7 +209,7 @@
   const valueEditorProps = withCommonProps(common, {
     testID: TestID.valueEditor,
     get field() {
-      return rule.field;
+      return ruleObj.field;
     },
     get fieldData() {
       return parts.fieldData;
@@ -219,13 +218,13 @@
       return translations.value.title;
     },
     get operator() {
-      return rule.operator;
+      return ruleObj.operator;
     },
     get value() {
-      return rule.value;
+      return ruleObj.value;
     },
     get valueSource() {
-      return rule.valueSource ?? 'value';
+      return ruleObj.valueSource ?? 'value';
     },
     get type() {
       return ctx.valueEditorType;
@@ -265,7 +264,7 @@
       return classNames.cloneRule;
     },
     get ruleOrGroup() {
-      return rule;
+      return ruleObj;
     },
     get handleOnClick() {
       return parts.cloneRule;
@@ -284,29 +283,29 @@
       return classNames.lockRule;
     },
     get ruleOrGroup() {
-      return rule;
+      return ruleObj;
     },
     get handleOnClick() {
       return parts.toggleLockRule;
     },
     get disabledTranslation() {
-      return props.parentDisabled ? undefined : translations.lockRuleDisabled;
+      return ruleProps.parentDisabled ? undefined : translations.lockRuleDisabled;
     },
   });
 
   const muteRuleActionProps = withCommonProps(common, {
     testID: TestID.muteRule,
     get label() {
-      return rule.muted ? translations.unmuteRule.label : translations.muteRule.label;
+      return ruleObj.muted ? translations.unmuteRule.label : translations.muteRule.label;
     },
     get title() {
-      return rule.muted ? translations.unmuteRule.title : translations.muteRule.title;
+      return ruleObj.muted ? translations.unmuteRule.title : translations.muteRule.title;
     },
     get className() {
       return classNames.muteRule;
     },
     get ruleOrGroup() {
-      return rule;
+      return ruleObj;
     },
     get handleOnClick() {
       return parts.toggleMuteRule;
@@ -325,7 +324,7 @@
       return classNames.removeRule;
     },
     get ruleOrGroup() {
-      return rule;
+      return ruleObj;
     },
     get handleOnClick() {
       return parts.removeRule;
@@ -333,42 +332,62 @@
   });
 </script>
 
+<!--
+  @component
+  The controls that make up a rule, without the wrapping `<div>`.
+
+  Port of React Query Builder's `RuleComponents`. In `subQuery` mode (used by
+  `RuleSubQuery.svelte`) the subquery's group header and body are rendered in `<div>`s around
+  the rule's own action buttons, which is why one instance has to hold two `(props, parts)`
+  pairs from two separate query-builder states.
+
+  The empty-HTML-comment joiners between siblings are load-bearing, here and in every other
+  component whose output lands inside a rule or group element. JSX drops whitespace-only lines
+  between elements; Svelte collapses each gap to a single space and keeps it, which would put text
+  nodes in the DOM that React Query Builder never emits. The conformance fixtures compare each
+  element's own text verbatim, so the difference is a failure, not a nicety. Do not reformat these
+  apart. -->
+
 {#if schema.showShiftActions}
   <Control control={controls.shiftActions} props={shiftActionsProps} />
-{/if}
-{#if parts.showFieldSelector}
+{/if}<!--
+-->{#if parts.showFieldSelector}
   <Control control={controls.fieldSelector} props={fieldSelectorProps} />
-{/if}
-{#if schema.autoSelectField || rule.field !== translations.fields.placeholderName}
-  {#if subQueryParts}
+{/if}<!--
+-->{#if schema.autoSelectField || ruleObj.field !== translations.fields.placeholderName}
+  {#if mode === 'subQuery'}
     <Control control={controls.matchModeEditor} props={matchModeEditorProps} />
   {:else}
-    <Control control={controls.operatorSelector} props={operatorSelectorProps} />
-    {#if parts.showValueControls}
+    <Control
+      control={controls.operatorSelector}
+      props={operatorSelectorProps} /><!--
+    -->{#if parts.showValueControls}
       {#if parts.showValueSourceSelector}
         <Control control={controls.valueSourceSelector} props={valueSourceSelectorProps} />
-      {/if}
-      <Control control={controls.valueEditor} props={valueEditorProps} />
+      {/if}<!--
+      --><Control control={controls.valueEditor} props={valueEditorProps} />
     {/if}
   {/if}
-{/if}
-{#if subQueryParts && subQueryProps}
-  <div class={subQueryParts.classNames.header}>
-    <RuleGroupHeader props={subQueryProps} parts={subQueryParts} />
+{/if}<!--
+-->{#if subQuery}
+  <div class={subQuery.parts.classNames.header}>
+    <RuleGroupHeader props={subQuery.props} parts={subQuery.parts} />
   </div>
-{/if}
-{#if schema.showCloneButtons}
+{/if}<!--
+-->{#if schema.showCloneButtons}
   <Control control={controls.cloneRuleAction} props={cloneRuleActionProps} />
-{/if}
-{#if schema.showLockButtons}
+{/if}<!--
+-->{#if schema.showLockButtons}
   <Control control={controls.lockRuleAction} props={lockRuleActionProps} />
-{/if}
-{#if schema.showMuteButtons}
+{/if}<!--
+-->{#if schema.showMuteButtons}
   <Control control={controls.muteRuleAction} props={muteRuleActionProps} />
-{/if}
-<Control control={controls.removeRuleAction} props={removeRuleActionProps} />
-{#if subQueryParts && subQueryProps}
-  <div class={subQueryParts.classNames.body}>
-    <RuleGroupBody props={subQueryProps} parts={subQueryParts} />
+{/if}<!--
+--><Control
+  control={controls.removeRuleAction}
+  props={removeRuleActionProps} /><!--
+-->{#if subQuery}
+  <div class={subQuery.parts.classNames.body}>
+    <RuleGroupBody props={subQuery.props} parts={subQuery.parts} />
   </div>
 {/if}

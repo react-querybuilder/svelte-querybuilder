@@ -5,7 +5,7 @@
   Port of React Query Builder's `ValueEditor`. The reset effect lives in
   `createValueEditorReset` (the one piece with a timing hazard); the rest is derived here.
 -->
-<script lang="ts">
+<script lang="ts" generics="F extends FullField = FullField, O extends string = string">
   import type { FullField } from '@react-querybuilder/core';
   import {
     coerceBigIntValue,
@@ -22,7 +22,7 @@
   import { createValueEditorReset } from '../reactive/valueEditorEffect.svelte.js';
   import type { ValueEditorProps, ValueSelectorProps } from '../types/props.js';
 
-  const props: ValueEditorProps<FullField, string> = $props();
+  const props: ValueEditorProps<F, O> = $props();
 
   /** Stable prefix for `radio` input ids, so each `<label for>` association is unique. */
   const uid = $props.id();
@@ -101,8 +101,8 @@
 {:else if isBetween}
   <span data-testid={props.testID} class={props.className} title={props.title}>
     {#each [0, 1] as i (i)}
-      {#if i === 1}{@render separator()}{/if}
-      {#if type === 'text'}
+      {#if i === 1}{@render separator()}{/if}<!--
+      -->{#if type === 'text'}
         <input
           type={inputTypeCoerced}
           placeholder={placeholderText}
@@ -171,8 +171,8 @@
           value={v.name}
           disabled={props.disabled}
           checked={props.value === v.name}
-          onchange={e => props.handleOnChange(e.currentTarget.value)} />
-        {v.label}
+          onchange={e => props.handleOnChange(e.currentTarget.value)} /><!--
+        -->{v.label}
       </label>
     {/each}
   </span>

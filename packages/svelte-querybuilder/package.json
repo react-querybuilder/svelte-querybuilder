@@ -51,12 +51,13 @@
     "build": "bun run build:main && bun run build:css",
     "build:main": "svelte-package -i src/lib -o dist && find dist \\( -name '*.test.*' -o -name '*.test-d.*' -o -name '*.spec.*' \\) -delete",
     "build:css": "mkdir -p dist/styles && cp ../../node_modules/@react-querybuilder/core/dist/*.scss dist && cp ../../node_modules/@react-querybuilder/core/dist/styles/*.scss dist/styles && cp -f src/lib/styles/*.scss dist/styles 2>/dev/null || true; bun sass --style=compressed dist",
-    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "dev": "vite dev",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:exports": "bun run ./scripts/check-dist-specifiers.ts && attw --pack . --profile esm-only --ignore-rules internal-resolution-error",
     "conformance": "bun run conformance:fetch && bun run conformance:test",
     "conformance:fetch": "bun ./scripts/fetch-fixtures.ts",
     "conformance:test": "vitest run --config vitest.conformance.config.ts",
-    "check:watch": "svelte-check --tsconfig ./tsconfig.json --watch"
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
   },
   "peerDependencies": {
     "svelte": "^5.25"
@@ -66,7 +67,10 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
+    "@sveltejs/adapter-node": "^5.5.7",
+    "@sveltejs/kit": "^2.70.2",
     "@sveltejs/package": "^2.5.8",
+    "@sveltejs/vite-plugin-svelte": "^7.3.0",
     "svelte": "^5.56.9",
     "svelte-check": "^4.7.6",
     "typescript": "^5.9.3"

@@ -13,7 +13,7 @@
 
 import { cleanup } from '@testing-library/svelte';
 import { afterEach, describe, expect, it } from 'vitest';
-import { loadFixture, renderAndExtract, renderPairs } from './cases';
+import { loadFixture, renderAndExtract, renderPairs, stripUnrecordedChannels } from './cases';
 import type { ClassNameEntry } from './extract';
 import { scenarios } from './scenarios';
 
@@ -53,7 +53,7 @@ describe('conformance: classnames', () => {
     it(`${expected.scenario} × ${expected.query}`, () => {
       const { classNames } = renderAndExtract(pair);
 
-      expect(classNames).toEqual(expected.classNames);
+      expect(stripUnrecordedChannels(classNames, fixture)).toEqual(expected.classNames);
     });
   }
 });

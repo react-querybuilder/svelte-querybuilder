@@ -161,7 +161,7 @@ export interface ControlPropsMap<F extends FullField, O extends string> {
    *
    * @default Rule
    */
-  rule: RuleProps;
+  rule: RuleProps<F, O>;
   /**
    * Rule group layout control.
    *

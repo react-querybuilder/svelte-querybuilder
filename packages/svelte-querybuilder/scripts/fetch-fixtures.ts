@@ -22,10 +22,17 @@ import * as path from 'node:path';
 export const CONFORMANCE_TAG = 'v8.22.4';
 
 /**
- * The fixture *shape* version. Not the tag: upstream may cut a dozen releases without changing
- * the schema, and a schema change must fail loudly rather than be mis-read.
+ * The fixture *shape* versions this harness understands. Not the tag: upstream may cut a dozen
+ * releases without changing the schema, and a schema change must fail loudly rather than be
+ * mis-read.
+ *
+ * Two are accepted because the schemas are nested, not alternative: 3 adds a per-element `text`
+ * channel and changes nothing else. The extractor always produces it; `stripUnrecordedChannels`
+ * in `test/conformance/cases.ts` drops it when the fixtures on disk are schema 2. So the tag can
+ * be bumped to a schema-3 release in one line, with the new channel asserted immediately and no
+ * other edit.
  */
-export const EXPECTED_SCHEMA_VERSION = 2;
+export const SUPPORTED_SCHEMA_VERSIONS: readonly number[] = [2, 3];
 
 const ASSET = 'rqb-conformance-fixtures.tar.gz';
 const RELEASE_URL = `https://github.com/react-querybuilder/react-querybuilder/releases/download/${CONFORMANCE_TAG}`;
@@ -76,10 +83,11 @@ export const fetchFixtures = async (): Promise<void> => {
   await rm(archivePath);
 
   const index = await Bun.file(path.join(fixturesDir, 'index.json')).json();
-  if (index.schemaVersion !== EXPECTED_SCHEMA_VERSION) {
+  if (!SUPPORTED_SCHEMA_VERSIONS.includes(index.schemaVersion)) {
     throw new Error(
-      `Fixture schemaVersion is ${index.schemaVersion}, expected ${EXPECTED_SCHEMA_VERSION}. ` +
-        `The fixture format changed upstream; update test/conformance before bumping the tag.`
+      `Fixture schemaVersion is ${index.schemaVersion}, expected one of ` +
+        `${SUPPORTED_SCHEMA_VERSIONS.join(', ')}. The fixture format changed upstream; update ` +
+        `test/conformance before bumping the tag.`
     );
   }
 

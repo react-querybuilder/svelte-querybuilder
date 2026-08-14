@@ -67,8 +67,8 @@
     listsAsArrays: false,
     path: dummyPath,
     level: 0,
-  }} />
-{#if requiresThreshold(props.match.mode)}
+  }} /><!--
+-->{#if requiresThreshold(props.match.mode)}
   <Control
     control={numericEditor}
     props={{
