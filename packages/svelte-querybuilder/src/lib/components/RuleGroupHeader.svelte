@@ -291,9 +291,8 @@
   Port of React Query Builder's `RuleGroupHeaderComponents`. Internal rather than a control
   element; it is a separate component only so that `Rule` can reuse it for a subquery.
 
-  The `<!-- -->`
-joiners between siblings suppress the whitespace text nodes Svelte would otherwise emit between them
-— see `RuleComponents.svelte` for why that matters. -->
+  The empty-HTML-comment joiners between siblings suppress the whitespace text nodes Svelte would
+  otherwise emit between them — see `RuleComponents.svelte` for why that matters. -->
 
 {#if schema.showShiftActions && path.length > 0}
   <Control control={controls.shiftActions} props={shiftActionsProps} />

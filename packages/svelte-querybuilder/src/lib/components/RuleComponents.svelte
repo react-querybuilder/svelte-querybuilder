@@ -341,12 +341,12 @@
   the rule's own action buttons, which is why one instance has to hold two `(props, parts)`
   pairs from two separate query-builder states.
 
-  The `<!-- -->`
-joiners between siblings are load-bearing, here and in every other component whose output lands
-inside a rule or group element. JSX drops whitespace-only lines between elements; Svelte collapses
-each gap to a single space and keeps it, which would put text nodes in the DOM that React Query
-Builder never emits. The conformance fixtures compare each element's own text verbatim, so the
-difference is a failure, not a nicety. Do not reformat these apart. -->
+  The empty-HTML-comment joiners between siblings are load-bearing, here and in every other
+  component whose output lands inside a rule or group element. JSX drops whitespace-only lines
+  between elements; Svelte collapses each gap to a single space and keeps it, which would put text
+  nodes in the DOM that React Query Builder never emits. The conformance fixtures compare each
+  element's own text verbatim, so the difference is a failure, not a nicety. Do not reformat these
+  apart. -->
 
 {#if schema.showShiftActions}
   <Control control={controls.shiftActions} props={shiftActionsProps} />

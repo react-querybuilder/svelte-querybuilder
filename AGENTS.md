@@ -93,7 +93,7 @@ Runes only. No Svelte 4 idioms — no `export let`, no `$:`, no stores for compo
 
 ```svelte
 <script lang="ts">
-  import type { QueryBuilderProps } from './types';
+  import type { QueryBuilderProps } from './types/index.js';
 
   let { fields, query = $bindable(), onQueryChange }: QueryBuilderProps = $props();
 
