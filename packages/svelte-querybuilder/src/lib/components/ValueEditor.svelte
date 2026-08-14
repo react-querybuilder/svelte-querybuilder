@@ -101,8 +101,8 @@
 {:else if isBetween}
   <span data-testid={props.testID} class={props.className} title={props.title}>
     {#each [0, 1] as i (i)}
-      {#if i === 1}{@render separator()}{/if}
-      {#if type === 'text'}
+      {#if i === 1}{@render separator()}{/if}<!--
+      -->{#if type === 'text'}
         <input
           type={inputTypeCoerced}
           placeholder={placeholderText}
@@ -171,8 +171,8 @@
           value={v.name}
           disabled={props.disabled}
           checked={props.value === v.name}
-          onchange={e => props.handleOnChange(e.currentTarget.value)} />
-        {v.label}
+          onchange={e => props.handleOnChange(e.currentTarget.value)} /><!--
+        -->{v.label}
       </label>
     {/each}
   </span>

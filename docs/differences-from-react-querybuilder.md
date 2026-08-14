@@ -1,12 +1,34 @@
 # Differences from React Query Builder
 
-`svelte-querybuilder` is a port of [React Query Builder](https://react-querybuilder.js.org)'s UI layer. Both packages sit on top of the same logic layer, [`@react-querybuilder/core`](https://www.npmjs.com/package/@react-querybuilder/core), so query shapes, field/operator configuration, validation, `formatQuery`, and the parsers all behave identically. What differs is the component layer and everything React-specific about it.
+If you know [React Query Builder](https://react-querybuilder.js.org), start here. This is the orientation page for everything you already know that still applies, and everything that doesn't.
 
-This page is the complete list of intentional divergences.
+## The mental model
 
-## Rendered output is identical
+`svelte-querybuilder` is a Svelte library that **shares a logic layer** with React Query Builder — not a transliteration of it. The two packages sit on the same [`@react-querybuilder/core`](https://www.npmjs.com/package/@react-querybuilder/core), and they are held to two different standards:
 
-Element structure, document order, class names, `data-testid`s, and `data-path` attributes are intended to match React Query Builder exactly, and are verified against fixtures generated from the React package. If you find a DOM difference that is not listed here, it is a bug.
+|                                                                                                   | Contract                                                                                                                                                                                                           |
+| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Query shapes, field/operator config, validation, `formatQuery`, the parsers, i18n string keys** | **Identical.** Same package doing the work. RQB's documentation on any of these applies verbatim.                                                                                                                  |
+| **Rendered DOM** — element structure, document order, class names, `data-testid`s, `data-path`    | **Identical, and tested.** Verified against fixtures recorded from the React package, down to each element's own text. Your RQB stylesheet, theme, and DOM-level tests port over unchanged. A difference is a bug. |
+| **Component API** — prop names, control maps, lifecycle flags, generics                           | **Designed for Svelte.** Parity is explicitly not a goal. Where RQB's surface exists to work around React, this package does the Svelte-shaped thing instead.                                                      |
+
+So: keep your queries, your field configuration, and your CSS. Expect to rewrite your markup.
+
+The rest of this page is the complete list of intentional divergences.
+
+## Quick mapping
+
+| React Query Builder                               | Here                                                                                   |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `controlElements={{ valueEditor: MyEditor }}`     | `controls={{ valueEditor: MyEditor }}`, or a top-level `{#snippet valueEditor(props)}` |
+| `<QueryBuilder query onQueryChange />`            | Same, or `bind:query`                                                                  |
+| `defaultQuery`                                    | Same                                                                                   |
+| `enableMountQueryChange`                          | Gone; derived from first principles ([below](#known-behavioral-note))                  |
+| `useRule` / `useRuleGroup`                        | `createRuleParts` / `createRuleGroupParts` (take a props _getter_)                     |
+| `dispatchQuery` / `useQueryBuilderQuery` / `qbId` | Gone; there is no store ([below](#state-management))                                   |
+| `react-querybuilder/history`                      | Built in; `showUndoRedo` + `schema.history`                                            |
+| `ReactNode` labels                                | `LabelNode = Snippet \| string`                                                        |
+| `enableDragAndDrop`                               | Not accepted ([below](#not-implemented))                                               |
 
 ## Not implemented
 

@@ -6,13 +6,18 @@
     type FormatQueryOptions,
     type RuleGroupType,
     type RuleGroupTypeIC,
-  } from 'svelte-querybuilder';
+  } from '$lib/index.js';
 
   const fields: Field[] = [
     { name: 'firstName', label: 'First name', placeholder: 'Enter first name' },
     { name: 'lastName', label: 'Last name', placeholder: 'Enter last name' },
     { name: 'age', label: 'Age', inputType: 'number' },
-    { name: 'isMusician', label: 'Is a musician', valueEditorType: 'checkbox', defaultValue: false },
+    {
+      name: 'isMusician',
+      label: 'Is a musician',
+      valueEditorType: 'checkbox',
+      defaultValue: false,
+    },
     {
       name: 'instrument',
       label: 'Primary instrument',
@@ -119,16 +124,19 @@
   };
 </script>
 
-<h1>svelte-querybuilder demo</h1>
+<h1>svelte-querybuilder playground</h1>
 <p class="subtitle">
-  Running against library source. Edit anything under
-  <code>packages/svelte-querybuilder/src/lib</code> and this page hot-reloads.
+  Running against library source. Edit anything under <code>src/lib</code> and this page hot-reloads.
 </p>
 
 <div class="controls">
-  <label><input type="checkbox" bind:checked={independentCombinators} /> independent combinators</label>
+  <label
+    ><input type="checkbox" bind:checked={independentCombinators} /> independent combinators</label>
   <label>
-    <input type="checkbox" bind:checked={showCombinatorsBetweenRules} disabled={independentCombinators} />
+    <input
+      type="checkbox"
+      bind:checked={showCombinatorsBetweenRules}
+      disabled={independentCombinators} />
     showCombinatorsBetweenRules
   </label>
   <label><input type="checkbox" bind:checked={showNotToggle} /> showNotToggle</label>

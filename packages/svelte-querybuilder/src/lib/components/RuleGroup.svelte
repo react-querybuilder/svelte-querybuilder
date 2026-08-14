@@ -33,6 +33,8 @@
   <div class={parts.classNames.header}>
     <RuleGroupHeader {props} {parts} />
   </div>
+  <!--
+  -->
   <div class={parts.classNames.body}>
     <RuleGroupBody {props} {parts} />
   </div>

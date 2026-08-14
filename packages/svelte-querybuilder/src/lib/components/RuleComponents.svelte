@@ -1,12 +1,3 @@
-<!--
-  @component
-  The controls that make up a rule, without the wrapping `<div>`.
-
-  Port of React Query Builder's `RuleComponents`. In `subQuery` mode (used by
-  `RuleSubQuery.svelte`) the subquery's group header and body are rendered in `<div>`s around
-  the rule's own action buttons, which is why one instance has to hold two `(props, parts)`
-  pairs from two separate query-builder states.
--->
 <script lang="ts">
   import { TestID } from '@react-querybuilder/core';
   import Control from '../internal/Control.svelte';
@@ -341,41 +332,61 @@
   });
 </script>
 
+<!--
+  @component
+  The controls that make up a rule, without the wrapping `<div>`.
+
+  Port of React Query Builder's `RuleComponents`. In `subQuery` mode (used by
+  `RuleSubQuery.svelte`) the subquery's group header and body are rendered in `<div>`s around
+  the rule's own action buttons, which is why one instance has to hold two `(props, parts)`
+  pairs from two separate query-builder states.
+
+  The `<!-- -->`
+joiners between siblings are load-bearing, here and in every other component whose output lands
+inside a rule or group element. JSX drops whitespace-only lines between elements; Svelte collapses
+each gap to a single space and keeps it, which would put text nodes in the DOM that React Query
+Builder never emits. The conformance fixtures compare each element's own text verbatim, so the
+difference is a failure, not a nicety. Do not reformat these apart. -->
+
 {#if schema.showShiftActions}
   <Control control={controls.shiftActions} props={shiftActionsProps} />
-{/if}
-{#if parts.showFieldSelector}
+{/if}<!--
+-->{#if parts.showFieldSelector}
   <Control control={controls.fieldSelector} props={fieldSelectorProps} />
-{/if}
-{#if schema.autoSelectField || ruleObj.field !== translations.fields.placeholderName}
+{/if}<!--
+-->{#if schema.autoSelectField || ruleObj.field !== translations.fields.placeholderName}
   {#if mode === 'subQuery'}
     <Control control={controls.matchModeEditor} props={matchModeEditorProps} />
   {:else}
-    <Control control={controls.operatorSelector} props={operatorSelectorProps} />
-    {#if parts.showValueControls}
+    <Control
+      control={controls.operatorSelector}
+      props={operatorSelectorProps} /><!--
+    -->{#if parts.showValueControls}
       {#if parts.showValueSourceSelector}
         <Control control={controls.valueSourceSelector} props={valueSourceSelectorProps} />
-      {/if}
-      <Control control={controls.valueEditor} props={valueEditorProps} />
+      {/if}<!--
+      --><Control control={controls.valueEditor} props={valueEditorProps} />
     {/if}
   {/if}
-{/if}
-{#if subQuery}
+{/if}<!--
+-->{#if subQuery}
   <div class={subQuery.parts.classNames.header}>
     <RuleGroupHeader props={subQuery.props} parts={subQuery.parts} />
   </div>
-{/if}
-{#if schema.showCloneButtons}
+{/if}<!--
+-->{#if schema.showCloneButtons}
   <Control control={controls.cloneRuleAction} props={cloneRuleActionProps} />
-{/if}
-{#if schema.showLockButtons}
+{/if}<!--
+-->{#if schema.showLockButtons}
   <Control control={controls.lockRuleAction} props={lockRuleActionProps} />
-{/if}
-{#if schema.showMuteButtons}
+{/if}<!--
+-->{#if schema.showMuteButtons}
   <Control control={controls.muteRuleAction} props={muteRuleActionProps} />
-{/if}
-<Control control={controls.removeRuleAction} props={removeRuleActionProps} />
-{#if subQuery}
+{/if}<!--
+--><Control
+  control={controls.removeRuleAction}
+  props={removeRuleActionProps} /><!--
+-->{#if subQuery}
   <div class={subQuery.parts.classNames.body}>
     <RuleGroupBody props={subQuery.props} parts={subQuery.parts} />
   </div>

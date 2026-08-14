@@ -9,6 +9,7 @@
   ],
   "scripts": {
     "build": "bun run --filter svelte-querybuilder build",
+    "dev": "bun run --filter svelte-querybuilder dev",
     "check": "bun run --filter svelte-querybuilder check && bun run --filter '@svelte-querybuilder/example-*' check",
     "check:exports": "bun run --filter svelte-querybuilder check:exports",
     "check:all": "bun fmt:check && bun run build && bun run check && bun run check:exports && bun lint && bun run test:coverage && bun run conformance && bun run test:ssr",

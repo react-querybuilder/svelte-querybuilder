@@ -26,8 +26,9 @@
     type="button"
     disabled={disabled || shiftUpDisabled}
     onclick={e => shiftUp?.(e)}
-    title={titles?.shiftUp}><Label label={labels?.shiftUp} /></button>
-  <button
+    title={titles?.shiftUp}><Label label={labels?.shiftUp} /></button
+  ><!--
+  --><button
     type="button"
     disabled={disabled || shiftDownDisabled}
     onclick={e => shiftDown?.(e)}

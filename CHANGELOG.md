@@ -21,11 +21,13 @@ Control elements are now composed the Svelte way. Each of the 24 control names i
 - **Breaking:** `enableMountQueryChange`. Its behavior is now derived from first principles — see below.
 - `createRuleContext` and `createRuleGroupContext`, along with the `Derived<T>` (`{ readonly current: T }`) wrapper type. `createRuleParts`/`createRuleGroupParts` are the supported path and return getters directly.
 - `createActions`, superseded by core's `createQueryActions`.
+- The `examples/demo` package. Its content became the development playground inside the library package (see below); `examples/sveltekit` remains as the starter template and SSR gate.
 
 ### Added
 
 - Top-level snippet props for every control: `valueEditor`, `removeRuleAction`, `ruleGroup`, `actionElement`, `valueSelector`, and so on. A snippet declared inside a component's tags only becomes a prop when the name is top-level, which is what makes the idiomatic form reachable.
 - `controls`, the bulk object form, for configuration assembled programmatically. It accepts components, `null`, and snippets wrapped as `{ snippet }`.
+- A SvelteKit development playground at `packages/svelte-querybuilder/src/routes`, run with `bun run dev`. It imports library source (`$lib`) and core's SCSS rather than anything in `dist`, so component _and_ stylesheet edits hot-reload without a build. The package is now a SvelteKit project for this reason alone — `svelte-package` still reads `src/lib` and nothing else, and nothing under `src/routes` is published.
 
 ### Changed
 
@@ -40,6 +42,8 @@ Control elements are now composed the Svelte way. Each of the 24 control names i
 - `onQueryChange` fires once during initialization if and only if the initial query was seeded or normalized by the component — no query supplied, or one supplied without `id`s. A query handed over ready to use never triggers it. This is what `enableMountQueryChange` used to control, minus the flag.
 - The `query` prop is documented as an input rather than the authority: it wins whenever it changes, and local edits stand in between. Note that a `query` prop rebuilt as a fresh object on every read is indistinguishable from a deliberate change and will revert every edit; pass a stable reference.
 - Option lists are `$derived(prepareOptionList(...))` rather than read back off a manager, and structural options (`fields`, `operators`, `combinators`, `translations`, `maxLevels`, `disabled`, `validator`, `idGenerator`, the `autoSelect*` flags) are re-derived from props instead of pushed into a mutable instance via `reconfigure`. Changing them mid-session still preserves the query and the undo/redo history.
+- The conformance extractor records each element's _own_ direct text-node children verbatim, matching the `text` channel added by upstream fixture `schemaVersion` 3. Fixtures older than that do not record it, so the channel is dropped before comparison until `CONFORMANCE_TAG` is bumped to a release that publishes schema 3; both versions are accepted by the fetch script in the meantime.
+- The unit suite has its own `vitest.config.ts`. `vite.config.ts` now carries the SvelteKit plugin for the playground, and Kit resolves its project from the working directory — which is the monorepo root when Vitest runs the package as a `projects` entry.
 - Undo/redo history is two `$state.raw` stacks with coalescing delegated to core's `shouldCoalesce`, so the coalescing rule cannot drift from core's.
 - **Breaking:** `RuleProps<F>` and `RuleGroupProps<F>` are parameterized by the _field object_ type, like every other props interface in this package. `RuleProps` previously took the field _name_ (`F extends string`, RQB's convention for that one interface) and `RuleGroupProps` took `F extends FullOption`; both are now `F extends FullField`, with the field name obtained via `GetOptionIdentifierType<F>`. `CommonSubComponentProps` and `SelectorOrEditorProps` are likewise constrained to `FullField` rather than `FullOption`.
 - `Rule`, `RuleGroup`, and `ValueEditor` are generic over the same `F`/`O`. `ValueEditor` previously hardcoded `ValueEditorProps<FullField, string>`, so a replacement value editor was better typed than the built-in one.
@@ -49,6 +53,7 @@ Control elements are now composed the Svelte way. Each of the 24 control names i
 
 ### Fixed
 
+- No element renders a whitespace text node React Query Builder does not. Svelte collapses the gap between two sibling elements to a single space and keeps it, where JSX drops whitespace-only lines entirely, so a rule `<div>` was carrying ten stray text nodes and a group body up to eight. Every affected sibling pair is now joined with an `<!-- -->` comment. Invisible in any normalizing assertion, but it is real DOM: text nodes affect `childNodes`, `::first-child`-adjacent CSS, and anything walking the tree.
 - Mounting a query with rules whose `value` no longer matches their `operator` — the ones for which core's `getValueEditorReset` returns `reset: true` — is roughly 40x faster. Each such rule commits a query change during mount, and every commit was re-dirtying every prop of every control in the tree, so the cost grew quadratically in the number of reset-eligible rules (~1s for a two-rule case in an eight-rule tree). Control prop bags are now getter-backed objects built once, rather than `$derived` object literals rebuilt per commit: `Control` forwards them through `{...props}`, and Svelte's `spread_props` resolves one key at a time, so each of a control's props subscribes to only its own sources instead of to the union of all of them. Interactive editing was never affected.
 
 ## [0.1.1] - 2026-08-05
