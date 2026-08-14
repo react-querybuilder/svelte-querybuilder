@@ -19,7 +19,7 @@ import * as path from 'node:path';
  * The upstream release whose fixtures this port is verified against. Bump deliberately, and
  * expect a diff in the conformance tests when you do.
  */
-export const CONFORMANCE_TAG = 'v8.22.4';
+export const CONFORMANCE_TAG = 'v8.23.0';
 
 /**
  * The fixture *shape* versions this harness understands. Not the tag: upstream may cut a dozen

@@ -46,7 +46,7 @@
       "name": "svelte-querybuilder",
       "version": "0.1.1",
       "dependencies": {
-        "@react-querybuilder/core": "https://pkg.pr.new/react-querybuilder/react-querybuilder/@react-querybuilder/core@3d5d992",
+        "@react-querybuilder/core": "^8.23.0",
       },
       "devDependencies": {
         "@arethetypeswrong/cli": "^0.18.2",
@@ -230,7 +230,7 @@
 
     "@polka/url": ["@polka/url@1.0.0-next.29", "", {}, "sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww=="],
 
-    "@react-querybuilder/core": ["@react-querybuilder/core@https://pkg.pr.new/react-querybuilder/react-querybuilder/@react-querybuilder/core@3d5d992", { "dependencies": { "@ts-jison/lexer": "0.4.1-alpha.1", "@ts-jison/parser": "0.4.1-alpha.1", "@types/json-logic-js": ">=2", "immer": "^11.1.16", "numeric-quantity": "^3.2.2" }, "peerDependencies": { "@tanstack/db": ">=0.6.9", "@traqula/parser-sparql-1-2": ">=0.1.0", "chevrotain": ">=11", "drizzle-orm": ">=0.38.0", "json-logic-js": ">=2", "jsonata": ">=2", "sequelize": ">=6", "spel2js": ">=0.2.0" }, "optionalPeers": ["@tanstack/db", "@traqula/parser-sparql-1-2", "chevrotain", "drizzle-orm", "json-logic-js", "jsonata", "sequelize", "spel2js"] }, "sha512-oPO4zaREeb5gokxobHytDWwr/SCZYZGyLUdWsWAdQAjo3KWHHkA2dNxHpiclnQdQ32rNtn8GcS0msyTFTeg7wQ=="],
+    "@react-querybuilder/core": ["@react-querybuilder/core@8.23.0", "", { "dependencies": { "@ts-jison/lexer": "0.4.1-alpha.1", "@ts-jison/parser": "0.4.1-alpha.1", "@types/json-logic-js": ">=2", "immer": "^11.1.16", "numeric-quantity": "^3.2.2" }, "peerDependencies": { "@tanstack/db": ">=0.6.9", "@traqula/parser-sparql-1-2": ">=0.1.0", "chevrotain": ">=11", "drizzle-orm": ">=0.38.0", "json-logic-js": ">=2", "jsonata": ">=2", "sequelize": ">=6", "spel2js": ">=0.2.0" }, "optionalPeers": ["@tanstack/db", "@traqula/parser-sparql-1-2", "chevrotain", "drizzle-orm", "json-logic-js", "jsonata", "sequelize", "spel2js"] }, "sha512-5EHBNwC31K0E4LJE2vea7s7bHnlRnYShH3ceSF4ZMcW5pnfcByfJA6JHymT1bh67l+n7iYq5n2gXtJuCZMLDSw=="],
 
     "@rolldown/binding-android-arm64": ["@rolldown/binding-android-arm64@1.2.2", "", { "os": "android", "cpu": "arm64" }, "sha512-l7x215OGvo1s52JWmR8U/DAVzEDWBCIbTm28aeJV/WDTSHgcKXaZTuBT0hJMs5NggilfJTW3clZVvd24yfKJxA=="],
 
