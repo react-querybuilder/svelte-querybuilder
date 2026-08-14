@@ -32,10 +32,8 @@
   data-path={JSON.stringify(props.path)}>
   <div class={parts.classNames.header}>
     <RuleGroupHeader {props} {parts} />
-  </div>
-  <!--
-  -->
-  <div class={parts.classNames.body}>
+  </div><!--
+  --><div class={parts.classNames.body}>
     <RuleGroupBody {props} {parts} />
   </div>
 </div>
