@@ -7,6 +7,7 @@ import { untrack } from 'svelte';
  */
 export interface ValueEditorResetDeps {
   operator: string;
+  // `any`: matches core's `RuleType.value`.
   // oxlint-disable-next-line typescript/no-explicit-any
   value: any;
   type?: string;

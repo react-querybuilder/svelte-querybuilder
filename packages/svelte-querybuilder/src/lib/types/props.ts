@@ -75,8 +75,7 @@ export interface CommonSubComponentProps<
   /**
    * Container for custom props that are passed to all components.
    */
-  // oxlint-disable-next-line typescript/no-explicit-any
-  context?: any;
+  context?: unknown;
   /**
    * Validation result of the parent rule/group.
    */
@@ -101,6 +100,7 @@ export interface SelectorOrEditorProps<
   O extends string = string,
 > extends CommonSubComponentProps<F, O> {
   value?: string;
+  // `any`: payload type varies per control (string, array, boolean, bigint…), as in core.
   // oxlint-disable-next-line typescript/no-explicit-any
   handleOnChange(value: any): void;
 }
@@ -212,8 +212,7 @@ export interface ActionProps extends CommonSubComponentProps {
    * Triggers the action, e.g. the addition of a new rule or group. The second parameter
    * will be forwarded to the `onAddRule` or `onAddGroup` callback if appropriate.
    */
-  // oxlint-disable-next-line typescript/no-explicit-any
-  handleOnClick(e?: MouseEvent, context?: any): void;
+  handleOnClick(e?: MouseEvent, context?: unknown): void;
   /**
    * Translation which overrides the regular `label`/`title` props when
    * the element is disabled.
@@ -327,6 +326,7 @@ export interface ValueEditorProps<F extends FullField = FullField, O extends str
   extends SelectorOrEditorProps<F, O>, CommonRuleSubComponentProps {
   field: GetOptionIdentifierType<F>;
   operator: O;
+  // `any`: matches core's `RuleType.value`.
   // oxlint-disable-next-line typescript/no-explicit-any
   value?: any;
   valueSource: ValueSource;
@@ -362,8 +362,7 @@ interface CommonRuleAndGroupProps<F extends FullField = FullField, O extends str
   disabled?: boolean;
   shiftUpDisabled?: boolean;
   shiftDownDisabled?: boolean;
-  // oxlint-disable-next-line typescript/no-explicit-any
-  context?: any;
+  context?: unknown;
 }
 
 /**
@@ -516,6 +515,7 @@ export type QueryBuilderProps<
       /**
        * Returns the default `value` for new rules.
        */
+      // `any`: matches core's `RuleType.value`.
       // oxlint-disable-next-line typescript/no-explicit-any
       getDefaultValue?(rule: R, misc: { fieldData: F }): any;
       /**
@@ -612,13 +612,11 @@ export type QueryBuilderProps<
       /**
        * This callback is invoked before a new rule is added.
        */
-      // oxlint-disable-next-line typescript/no-explicit-any
-      onAddRule?(rule: R, parentPath: Path, query: RG, context?: any): RuleType | boolean;
+      onAddRule?(rule: R, parentPath: Path, query: RG, context?: unknown): RuleType | boolean;
       /**
        * This callback is invoked before a new group is added.
        */
-      // oxlint-disable-next-line typescript/no-explicit-any
-      onAddGroup?(ruleGroup: RG, parentPath: Path, query: RG, context?: any): RG | boolean;
+      onAddGroup?(ruleGroup: RG, parentPath: Path, query: RG, context?: unknown): RG | boolean;
       /**
        * This callback is invoked before a rule is moved or shifted.
        */
@@ -629,8 +627,7 @@ export type QueryBuilderProps<
         query: RG,
         nextQuery: RG,
         options: MoveOptions,
-        // oxlint-disable-next-line typescript/no-explicit-any
-        context?: any
+        context?: unknown
       ): RG | boolean;
       /**
        * This callback is invoked before a group is moved or shifted.
@@ -642,8 +639,7 @@ export type QueryBuilderProps<
         query: RG,
         nextQuery: RG,
         options: MoveOptions,
-        // oxlint-disable-next-line typescript/no-explicit-any
-        context?: any
+        context?: unknown
       ): RG | boolean;
       /**
        * This callback is invoked before a rule is grouped with another object.
@@ -655,8 +651,7 @@ export type QueryBuilderProps<
         query: RG,
         nextQuery: RG,
         options: GroupOptions,
-        // oxlint-disable-next-line typescript/no-explicit-any
-        context?: any
+        context?: unknown
       ): RG | boolean;
       /**
        * This callback is invoked before a group is grouped with another object.
@@ -668,14 +663,12 @@ export type QueryBuilderProps<
         query: RG,
         nextQuery: RG,
         options: GroupOptions,
-        // oxlint-disable-next-line typescript/no-explicit-any
-        context?: any
+        context?: unknown
       ): RG | boolean;
       /**
        * This callback is invoked before a rule or group is removed.
        */
-      // oxlint-disable-next-line typescript/no-explicit-any
-      onRemove?(ruleOrGroup: R | RG, path: Path, query: RG, context?: any): boolean;
+      onRemove?(ruleOrGroup: R | RG, path: Path, query: RG, context?: unknown): boolean;
       /**
        * This callback is invoked anytime the query state is updated.
        */
@@ -685,8 +678,7 @@ export type QueryBuilderProps<
        *
        * @default console.log
        */
-      // oxlint-disable-next-line typescript/no-explicit-any
-      onLog?(obj: any): void;
+      onLog?(obj: unknown): void;
       /**
        * Disables the entire query builder if true, or the rules and groups at
        * the specified paths (as well as all child rules/groups and subcomponents)
@@ -724,8 +716,7 @@ export type QueryBuilderProps<
       /**
        * Container for custom props that are passed to all components.
        */
-      // oxlint-disable-next-line typescript/no-explicit-any
-      context?: any;
+      context?: unknown;
     }
   : never;
 

@@ -57,6 +57,32 @@ export const stripUnrecordedChannels = (
     ? entries
     : entries.map(({ text: _text, ...rest }) => rest as ClassNameEntry);
 
+/**
+ * Assertion message for a class-name/text comparison. When an entry's `text` differs from the
+ * fixture only in whitespace, the likely cause is a removed `<!-- -->` joiner, so say so.
+ */
+export const textChannelMessage = (
+  actual: ClassNameEntry[],
+  expected: ClassNameEntry[]
+): string | undefined => {
+  const i = actual.findIndex(
+    (e, n) =>
+      expected[n] &&
+      e.className === expected[n].className &&
+      typeof e.text === 'string' &&
+      typeof expected[n].text === 'string' &&
+      e.text !== expected[n].text &&
+      e.text.trim() === expected[n].text.trim()
+  );
+  if (i === -1) return undefined;
+  return (
+    `Whitespace-only text drift at entry ${i} (class "${actual[i].className}"): ` +
+    `got ${JSON.stringify(actual[i].text)}, expected ${JSON.stringify(expected[i].text)}. ` +
+    'Svelte keeps inter-element whitespace that JSX drops; restore the `<!-- -->` joiners ' +
+    'between sibling elements (see AGENTS.md, Pitfalls #13).'
+  );
+};
+
 /** One scenario × query pair, in the order `generate.tsx` flattened them. */ export interface RenderPair {
   scenario: Scenario;
   queryName: string;

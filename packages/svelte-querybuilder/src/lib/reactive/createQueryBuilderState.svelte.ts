@@ -52,7 +52,7 @@ import {
 } from '@react-querybuilder/core';
 import type { Controls } from '../types/controls.js';
 import type { QueryBuilderContextProps, QueryBuilderProps } from '../types/props.js';
-import type { QueryHistory, Schema } from '../types/schema.js';
+import type { QueryHistory, Schema, SubQueryBuilderProps } from '../types/schema.js';
 import type { LabelNode, TranslationsFull } from '../types/translations.js';
 import type { MergedQueryBuilderConfig } from './context.svelte.js';
 import { getQueryBuilderContext, mergeQueryBuilderConfig } from './context.svelte.js';
@@ -166,7 +166,7 @@ export const createQueryBuilderState = <
   // direction only, so the widening happens once, here, rather than at each of the ~20 call
   // sites. Read through `getProps()` so a changed callback prop takes effect immediately.
   const callbacks = $derived(
-    getProps() as unknown as {
+    getProps() as {
       getDefaultField?: DefaultFieldProp<F>;
       getDefaultOperator?: DefaultOperatorProp<F>;
       getDefaultValue?: (rule: RuleType, misc: { fieldData: F }) => unknown;
@@ -193,7 +193,7 @@ export const createQueryBuilderState = <
         misc: { fieldData: F }
       ) => FlexibleOptionList<Option>;
       getInputType?: (field: string, operator: string, misc: { fieldData: F }) => InputType | null;
-      getSubQueryBuilderProps?: (field: string, misc: { fieldData: F }) => object;
+      getSubQueryBuilderProps?: (field: string, misc: { fieldData: F }) => SubQueryBuilderProps;
       getRuleClassname?: (rule: RuleType, misc: { fieldData: F }) => Classname;
       getRuleGroupClassname?: (ruleGroup: RuleGroupTypeAny) => Classname;
       onQueryChange?: (query: RuleGroupTypeAny) => void;
@@ -310,11 +310,8 @@ export const createQueryBuilderState = <
     misc: { fieldData: F }
   ): InputType | null => callbacks.getInputType?.(field, operator, misc) ?? 'text';
 
-  const getSubQueryBuilderProps = (
-    field: string,
-    misc: { fieldData: F }
-    // oxlint-disable-next-line typescript/no-explicit-any
-  ): any => callbacks.getSubQueryBuilderProps?.(field, misc) ?? {};
+  const getSubQueryBuilderProps = (field: string, misc: { fieldData: F }): SubQueryBuilderProps =>
+    callbacks.getSubQueryBuilderProps?.(field, misc) ?? {};
 
   const createRuleMain = (): RuleType =>
     createRule<F>({
@@ -521,13 +518,11 @@ export const createQueryBuilderState = <
     onGroupAdd: (group, parentPath, context) =>
       applyResult(handlers.addGroup(query, group, parentPath, context)),
     onPropChange: (prop, value, path) => applyResult(handlers.propChange(query, prop, value, path)),
-    // The `context` parameter is optional in every case, which is what makes these assignable
-    // to core's `QueryActions` signatures — several of which declare no `context` at all.
-    // oxlint-disable-next-line typescript/no-explicit-any
-    onRuleRemove: (path: Path, context?: any) =>
+    // `context` is optional, which keeps these assignable to core's `QueryActions` signatures,
+    // some of which declare no `context` at all.
+    onRuleRemove: (path: Path, context?: unknown) =>
       applyResult(handlers.removeRuleOrGroup(query, path, context)),
-    // oxlint-disable-next-line typescript/no-explicit-any
-    onGroupRemove: (path: Path, context?: any) =>
+    onGroupRemove: (path: Path, context?: unknown) =>
       applyResult(handlers.removeRuleOrGroup(query, path, context)),
     moveRule: (oldPath, newPath, clone, context) =>
       applyResult(handlers.moveRule(query, oldPath, newPath, clone, context)),

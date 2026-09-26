@@ -1,6 +1,12 @@
-import { defaultTranslations, standardClassnames } from '@react-querybuilder/core';
+import {
+  controlKeys,
+  controlKind,
+  defaultTranslations,
+  standardClassnames,
+} from '@react-querybuilder/core';
 import type { Snippet } from 'svelte';
 import { describe, expect, it } from 'vitest';
+import { defaultControlElements } from '../components/defaultControlElements.js';
 import {
   getQueryBuilderContext,
   mergeControls,
@@ -138,6 +144,15 @@ describe('mergeControls', () => {
     expect(controls.notToggle).toBeNull();
     // Controls that only exist upstream are never included.
     expect('dragHandle' in controls).toBe(false);
+  });
+
+  // Runtime twin of the compile-time `AllControlKeysAccountedFor` guard.
+  it("accounts for every one of core's control keys", () => {
+    const implemented = Object.keys(mergeControls());
+    const excluded = ['dragHandle', 'ruleGroupBodyElements', 'ruleGroupHeaderElements'];
+    expect([...implemented, ...excluded].sort()).toEqual([...controlKeys].sort());
+    expect(Object.keys(defaultControlElements).sort()).toEqual([...implemented].sort());
+    for (const key of implemented) expect(key in controlKind).toBe(true);
   });
 });
 
