@@ -528,6 +528,8 @@ export const createQueryBuilderState = <
       applyResult(handlers.moveRule(query, oldPath, newPath, clone, context)),
     groupRule: (sourcePath, targetPath, clone, context) =>
       applyResult(handlers.groupRule(query, sourcePath, targetPath, clone, context)),
+    ungroupRuleGroup: (targetPath, context) =>
+      applyResult(handlers.ungroupRuleGroup(query, targetPath, context)),
   };
   // #endregion
 

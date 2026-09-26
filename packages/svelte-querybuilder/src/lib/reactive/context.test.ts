@@ -150,8 +150,8 @@ describe('mergeControls', () => {
   it("accounts for every one of core's control keys", () => {
     const implemented = Object.keys(mergeControls());
     const excluded = ['dragHandle', 'ruleGroupBodyElements', 'ruleGroupHeaderElements'];
-    expect([...implemented, ...excluded].sort()).toEqual([...controlKeys].sort());
-    expect(Object.keys(defaultControlElements).sort()).toEqual([...implemented].sort());
+    expect([...implemented, ...excluded].toSorted()).toEqual([...controlKeys].toSorted());
+    expect(Object.keys(defaultControlElements).toSorted()).toEqual([...implemented].toSorted());
     for (const key of implemented) expect(key in controlKind).toBe(true);
   });
 });
