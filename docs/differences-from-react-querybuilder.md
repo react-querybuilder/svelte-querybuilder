@@ -114,11 +114,15 @@ See [customization.md](./customization.md) for the full resolution order.
 - `ActionProps.handleOnClick` and `ShiftActionsProps.shiftUp`/`shiftDown` take a DOM `MouseEvent`, not React's synthetic `MouseEvent`.
 - `Controls` entries are uniformly nullable, `null` meaning "render nothing". Unlike React, `undoRedoActions` has a default implementation, so it is never unset.
 - `ControlElementsProp` → `ControlsProp` (the `controls` prop), plus `ControlSnippetProps`, which has no React counterpart: one top-level `Snippet<[props]>` prop per control name.
+- Every `context` (the free-form prop, and the argument to the `on*` callbacks and `handleOnClick`) is `unknown` rather than `any`. Narrow before use.
+- `Schema.getSubQueryBuilderProps` returns the named `SubQueryBuilderProps` type and accepts any field name (`string`).
 - A resolved control is `Control<P> = Component<P> | { snippet: Snippet<[P]> }`, or `null` for "render nothing"; `ControlPropsMap` is the single source of truth for control names and their props.
 
 ## Reactivity
 
 React's hooks have no direct equivalents, and the `useMemo` graphs in `Rule`/`RuleGroup` are not ported — Svelte's reactivity is fine-grained, so manual memoization is unnecessary. If you were reaching into `useRule`/`useRuleGroup` to build a custom component, the equivalents are `createRuleParts` and `createRuleGroupParts`, which take a props _getter_ rather than a props object.
+
+See [Reactivity notes](./reactivity.md) for the consumer-facing consequences: stable `query` references, context as a getter, and getter-backed control props.
 
 ## Known behavioral note
 

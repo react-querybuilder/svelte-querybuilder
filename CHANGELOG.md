@@ -9,7 +9,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Query state is now owned entirely by Svelte runes. `QueryManager` is gone from this package: core's pure functions (`add`/`remove`/`update`/`move`, `createQueryActions`, `prepareOptionList`, `deriveRuleContext`, `shouldCoalesce`) supply the logic, and the reactive graph lives in `$state`/`$derived`. `createQueryBuilderState` contains no `$effect` at all, and no longer relies on deep-compare, live closures, a config-version counter, subscription mirroring, or try/catch around immer's freeze.
 
-Control elements are now composed the Svelte way. Each of the 24 control names is a top-level snippet prop, so `{#snippet valueEditor(props)}` works as a direct child of `<QueryBuilder>`, and the internal component-ABI trick that used to make snippets and components interchangeable is gone.
+Control elements are now composed the Svelte way. Each of the 25 control names is a top-level snippet prop, so `{#snippet valueEditor(props)}` works as a direct child of `<QueryBuilder>`, and the internal component-ABI trick that used to make snippets and components interchangeable is gone.
 
 ### Removed
 
@@ -28,6 +28,8 @@ Control elements are now composed the Svelte way. Each of the 24 control names i
 - Top-level snippet props for every control: `valueEditor`, `removeRuleAction`, `ruleGroup`, `actionElement`, `valueSelector`, and so on. A snippet declared inside a component's tags only becomes a prop when the name is top-level, which is what makes the idiomatic form reachable.
 - `controls`, the bulk object form, for configuration assembled programmatically. It accepts components, `null`, and snippets wrapped as `{ snippet }`.
 - A SvelteKit development playground at `packages/svelte-querybuilder/src/routes`, run with `bun run dev`. It imports library source (`$lib`) and core's SCSS rather than anything in `dist`, so component _and_ stylesheet edits hot-reload without a build. The package is now a SvelteKit project for this reason alone — `svelte-package` still reads `src/lib` and nothing else, and nothing under `src/routes` is published.
+- **Ungroup**, ported from core 8.24.0. Set `showUngroupButtons` to render an "Ungroup" button (`⊟`) in the header of every group except the root, which replaces that group with its own rules in the parent. Adds the `ungroupAction` control — defaulting to `ActionElement`, overridable as a top-level snippet prop or a `controls` entry, and a target of the `actionElement` bulk override like every other `controlKind: 'action'` key — the `onUngroup` callback prop (return `false` to cancel or a replacement query to substitute one, matching `onMoveRule`/`onGroupRule`), and `ungroupRuleGroup` on `RuleGroupParts`.
+- **Conformance fixtures now track upstream `v8.24.3`** (from `v8.23.0`). The `allControls` scenario gains `showUngroupButtons`, which is what proves the new button's placement, class, and label byte-for-byte against React's output.
 
 ### Changed
 
@@ -49,7 +51,14 @@ Control elements are now composed the Svelte way. Each of the 24 control names i
 - `Rule`, `RuleGroup`, and `ValueEditor` are generic over the same `F`/`O`. `ValueEditor` previously hardcoded `ValueEditorProps<FullField, string>`, so a replacement value editor was better typed than the built-in one.
 - `RuleComponents` takes `mode`, `rule: { props, parts }`, and (in `subQuery` mode) `subQuery: { props, parts }`, replacing four flat props. The two `(props, parts)` pairs — the rule's, and the subquery's own query-builder state — are now visibly paired, and whether a rule renders a `matchModeEditor` is decided by the explicit `mode` discriminator rather than by the presence of the subquery state.
 - `QueryBuilder` publishes context as `setQueryBuilderContext(() => state.context)` rather than an `Object.defineProperty` reflection loop, so the key set is no longer snapshotted at initialization. `getQueryBuilderContext` returns a getter.
-- Minimum `@react-querybuilder/core` is now 8.23.0, for the query-tool `freeze` opt-out (deep-freezing a Svelte `$state` proxy throws), `shouldCoalesce`, `controlKeys`/`controlKind`, and `DefaultFieldProp`/`DefaultOperatorProp`.
+- **Breaking:** every `context` is typed `unknown` instead of `any` — the free-form `context` prop on subcomponents and `QueryBuilder`, the `context` argument to `onAddRule`/`onAddGroup`/`onMoveRule`/`onMoveGroup`/`onGroupRule`/`onGroupGroup`/`onRemove`, and `ActionProps.handleOnClick`'s second argument. `onLog` takes `unknown`. Narrow before use.
+- **Breaking:** `Schema.getSubQueryBuilderProps` returns the new, exported `SubQueryBuilderProps` type and accepts any field name (`string`), and the internal implementation no longer returns `any`. Removes every `as never` from `RuleSubQuery`.
+- `Control` (the internal renderer) is generic over the control's props, so each built-in call site's props are type-checked against the control's prop type instead of passing through `any`. This caught `MatchModeEditor`'s threshold editor passing `valueSource` as `string` rather than `ValueSource`.
+- Remaining casts and `any`s in `src/lib` are either removed or annotated with the reason they stay, which is almost always a match for an `any` in core (`RuleType.value`, `QueryActions`).
+- A unit test caps `$effect` use in `src/lib` to an explicit allow-list (today, the single value-editor reset). Another checks this package's control keys against core's `controlKeys`/`controlKind` at runtime, alongside the existing compile-time guard.
+- When a conformance class-name comparison fails only on whitespace in an element's own text, the failure message now points to the `<!-- -->` joiners.
+- New [Reactivity notes](./docs/reactivity.md) doc, and a "Stability and versioning" README section covering the core version policy and what blocks 1.0.
+- Minimum `@react-querybuilder/core` is now 8.24.3, for ungroup (8.24.0), the query-tool `freeze` opt-out (deep-freezing a Svelte `$state` proxy throws), `shouldCoalesce`, `controlKeys`/`controlKind`, and `DefaultFieldProp`/`DefaultOperatorProp`.
 
 ### Fixed
 

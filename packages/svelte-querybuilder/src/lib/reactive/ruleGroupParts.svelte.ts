@@ -9,11 +9,8 @@ import {
 } from '@react-querybuilder/core';
 import type { RuleGroupProps } from '../types/props.js';
 
-// oxlint-disable-next-line typescript/no-explicit-any
-type AnyContext = any;
-
 /** A click handler that also receives the arbitrary `context` an action element may pass. */
-type ActionHandler = (event?: MouseEvent, context?: AnyContext) => void;
+type ActionHandler = (event?: MouseEvent, context?: unknown) => void;
 
 /**
  * Everything `RuleGroup`, `RuleGroupHeader`, and `RuleGroupBody` need, derived from
@@ -37,8 +34,8 @@ export interface RuleGroupParts {
   readonly accessibleDescription: string;
   /** Per-child path and disabled state, in `ruleGroup.rules` order. */
   readonly pathsMemo: ReturnType<typeof derivePathInfo>;
-  readonly onCombinatorChange: (value: AnyContext) => void;
-  readonly onIndependentCombinatorChange: (value: AnyContext, index: number) => void;
+  readonly onCombinatorChange: (value: string) => void;
+  readonly onIndependentCombinatorChange: (value: string, index: number) => void;
   readonly onNotToggleChange: (checked: boolean) => void;
   readonly addRule: ActionHandler;
   readonly addGroup: ActionHandler;
@@ -48,6 +45,7 @@ export interface RuleGroupParts {
   readonly removeGroup: ActionHandler;
   readonly shiftGroupUp: ActionHandler;
   readonly shiftGroupDown: ActionHandler;
+  readonly ungroupRuleGroup: ActionHandler;
 }
 
 /**
@@ -121,11 +119,11 @@ export const createRuleGroupParts = (getProps: () => RuleGroupProps): RuleGroupP
     schema.accessibleDescriptionGenerator({ path, qbId: '' })
   );
 
-  const onCombinatorChange = (value: AnyContext) => {
+  const onCombinatorChange = (value: string) => {
     if (!disabled) props.actions.onPropChange('combinator', value, path);
   };
 
-  const onIndependentCombinatorChange = (value: AnyContext, index: number) => {
+  const onIndependentCombinatorChange = (value: string, index: number) => {
     if (!disabled) props.actions.onPropChange('combinator', value, [...path, index]);
   };
 
@@ -167,6 +165,10 @@ export const createRuleGroupParts = (getProps: () => RuleGroupProps): RuleGroupP
     if (!disabled && !props.shiftDownDisabled) props.actions.moveRule(path, 'down', event?.altKey);
   });
 
+  const ungroupRuleGroup = stopPropagation(() => {
+    if (!disabled) props.actions.ungroupRuleGroup(path);
+  });
+
   return {
     get ruleGroup() {
       return ruleGroup;
@@ -206,5 +208,6 @@ export const createRuleGroupParts = (getProps: () => RuleGroupProps): RuleGroupP
     removeGroup,
     shiftGroupUp,
     shiftGroupDown,
+    ungroupRuleGroup,
   };
 };

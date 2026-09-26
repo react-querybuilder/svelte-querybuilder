@@ -52,7 +52,7 @@ assertType<QueryBuilderProps>(stdProps);
 // #endregion
 
 // #region Removed props
-// @ts-expect-error `qbId` does not exist (no Redux store; use `manager`)
+// @ts-expect-error `qbId` does not exist (no Redux store; state is per-instance runes)
 assertType<string | undefined>(stdProps.qbId);
 // @ts-expect-error drag-and-drop is a non-goal
 assertType<boolean | undefined>(stdProps.enableDragAndDrop);

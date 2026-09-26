@@ -63,15 +63,15 @@
     "svelte": "^5.25"
   },
   "dependencies": {
-    "@react-querybuilder/core": "^8.23.0"
+    "@react-querybuilder/core": "^8.24.3"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
     "@sveltejs/adapter-node": "^5.5.7",
-    "@sveltejs/kit": "^2.70.2",
+    "@sveltejs/kit": "^2.70.3",
     "@sveltejs/package": "^2.5.8",
-    "@sveltejs/vite-plugin-svelte": "^7.3.0",
-    "svelte": "^5.56.9",
+    "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "svelte": "^5.57.1",
     "svelte-check": "^4.7.6",
     "typescript": "^5.9.3"
   },

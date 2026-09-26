@@ -44,6 +44,18 @@ export interface QueryHistory {
 }
 
 /**
+ * Props a subquery overrides on the builder it inherits from (see `getSubQueryBuilderProps`).
+ *
+ * @group Props
+ */
+export type SubQueryBuilderProps = QueryBuilderProps<
+  RuleGroupTypeAny,
+  FullOption,
+  FullOption,
+  FullOption
+>;
+
+/**
  * Configuration options passed in the `schema` prop from `QueryBuilder` to each subcomponent.
  *
  * Query mutations go through the `actions` prop; this carries configuration and the resolved
@@ -76,10 +88,7 @@ export interface Schema<F extends FullField, O extends string> {
   getRuleDefaultValue(rule: RuleType): unknown;
   getRuleDefaultOperator(field: string): string;
   getMatchModes(field: string, misc: { fieldData: F }): MatchModeOptions;
-  getSubQueryBuilderProps(
-    field: GetOptionIdentifierType<F>,
-    misc: { fieldData: F }
-  ): QueryBuilderProps<RuleGroupTypeAny, FullOption, FullOption, FullOption>;
+  getSubQueryBuilderProps(field: string, misc: { fieldData: F }): SubQueryBuilderProps;
   getRuleClassname(rule: RuleType, misc: { fieldData: F }): Classname;
   getRuleGroupClassname(ruleGroup: RuleGroupTypeAny): Classname;
   accessibleDescriptionGenerator: AccessibleDescriptionGenerator;
@@ -90,6 +99,7 @@ export interface Schema<F extends FullField, O extends string> {
   showCloneButtons: boolean;
   showLockButtons: boolean;
   showMuteButtons: boolean;
+  showUngroupButtons: boolean;
   autoSelectField: boolean;
   autoSelectOperator: boolean;
   autoSelectValue: boolean;
