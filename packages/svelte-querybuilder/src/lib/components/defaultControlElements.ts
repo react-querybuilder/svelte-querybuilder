@@ -39,6 +39,7 @@ export const defaultControlElements: Controls<FullField, string> = {
   ruleGroup: RuleGroup,
   shiftActions: ShiftActions,
   undoRedoActions: UndoRedoActions,
+  ungroupAction: ActionElement,
   valueEditor: ValueEditor,
   valueSelector: ValueSelector,
   valueSourceSelector: ValueSelector,

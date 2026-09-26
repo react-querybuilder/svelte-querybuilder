@@ -45,6 +45,7 @@ export interface RuleGroupParts {
   readonly removeGroup: ActionHandler;
   readonly shiftGroupUp: ActionHandler;
   readonly shiftGroupDown: ActionHandler;
+  readonly ungroupRuleGroup: ActionHandler;
 }
 
 /**
@@ -164,6 +165,10 @@ export const createRuleGroupParts = (getProps: () => RuleGroupProps): RuleGroupP
     if (!disabled && !props.shiftDownDisabled) props.actions.moveRule(path, 'down', event?.altKey);
   });
 
+  const ungroupRuleGroup = stopPropagation(() => {
+    if (!disabled) props.actions.ungroupRuleGroup(path);
+  });
+
   return {
     get ruleGroup() {
       return ruleGroup;
@@ -203,5 +208,6 @@ export const createRuleGroupParts = (getProps: () => RuleGroupProps): RuleGroupP
     removeGroup,
     shiftGroupUp,
     shiftGroupDown,
+    ungroupRuleGroup,
   };
 };

@@ -666,6 +666,17 @@ export type QueryBuilderProps<
         context?: unknown
       ): RG | boolean;
       /**
+       * This callback is invoked before a group is replaced by its own rules in the parent
+       * group. Return `false` to cancel or a query to substitute. Ungrouping discards `not`.
+       */
+      onUngroup?(
+        ruleGroup: RG,
+        path: Path,
+        query: RG,
+        nextQuery: RG,
+        context?: unknown
+      ): RG | boolean;
+      /**
        * This callback is invoked before a rule or group is removed.
        */
       onRemove?(ruleOrGroup: R | RG, path: Path, query: RG, context?: unknown): boolean;

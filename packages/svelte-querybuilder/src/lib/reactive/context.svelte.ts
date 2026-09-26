@@ -71,7 +71,6 @@ const unimplementedControlKeys = [
   'dragHandle',
   'ruleGroupBodyElements',
   'ruleGroupHeaderElements',
-  'ungroupAction',
 ] as const satisfies readonly Exclude<ControlKey, SvelteControlKey>[];
 
 /** Fails to compile if core adds a control key this package neither implements nor excludes. */

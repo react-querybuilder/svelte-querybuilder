@@ -90,7 +90,7 @@ Not in v1, and not planned for the near term:
 
 Pre-1.0: minor releases (`0.x`) may break the component API. Breaking changes are listed in [`CHANGELOG.md`](./CHANGELOG.md).
 
-**Core version policy.** `@react-querybuilder/core` is a caret dependency on a minor (currently `^8.23.0`). The conformance fixtures are pinned to the matching React Query Builder tag, and the two move together: raising the core minimum means bumping the fixture tag and passing conformance against it. Core's public API, including the headless derivations this package uses, is semver-covered upstream.
+**Core version policy.** `@react-querybuilder/core` is a caret dependency on a minor (currently `^8.24.3`). The conformance fixtures are pinned to the matching React Query Builder tag, and the two move together: raising the core minimum means bumping the fixture tag and passing conformance against it. Core's public API, including the headless derivations this package uses, is semver-covered upstream.
 
 **What blocks 1.0:**
 

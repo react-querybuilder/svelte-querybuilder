@@ -503,6 +503,7 @@ export const createQueryBuilderState = <
       onMoveGroup: getProps().onMoveGroup,
       onGroupRule: getProps().onGroupRule,
       onGroupGroup: getProps().onGroupGroup,
+      onUngroup: getProps().onUngroup,
       onLog: config.debugMode ? (getProps().onLog ?? console.log) : undefined,
     })
   );
@@ -598,6 +599,7 @@ export const createQueryBuilderState = <
     showCloneButtons: config.showCloneButtons,
     showLockButtons: config.showLockButtons,
     showMuteButtons: config.showMuteButtons,
+    showUngroupButtons: config.showUngroupButtons,
     autoSelectField: config.autoSelectField,
     autoSelectOperator: config.autoSelectOperator,
     autoSelectValue: config.autoSelectValue,
@@ -626,6 +628,7 @@ export const createQueryBuilderState = <
     showCloneButtons: config.showCloneButtons,
     showLockButtons: config.showLockButtons,
     showMuteButtons: config.showMuteButtons,
+    showUngroupButtons: config.showUngroupButtons,
     resetOnFieldChange: config.resetOnFieldChange,
     resetOnOperatorChange: config.resetOnOperatorChange,
     autoSelectField: config.autoSelectField,
