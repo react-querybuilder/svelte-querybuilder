@@ -1,4 +1,4 @@
-import type { FullField, RuleContextResolvers } from '@react-querybuilder/core';
+import type { FullField, QueryActions, RuleContextResolvers } from '@react-querybuilder/core';
 import {
   deriveRuleClassNames,
   deriveRuleContext,
@@ -11,11 +11,13 @@ import {
 import type { RuleProps } from '../types/props.js';
 import type { LabelNode } from '../types/translations.js';
 
+// Rule values are untyped in core (`RuleType.value: any`); matched here so handlers stay assignable
+// to controls' `handleOnChange`.
 // oxlint-disable-next-line typescript/no-explicit-any
-type AnyContext = any;
+type AnyValue = any;
 
 /** A click handler that also receives the arbitrary `context` an action element may pass. */
-type ActionHandler = (event?: MouseEvent, context?: AnyContext) => void;
+type ActionHandler = (event?: MouseEvent, context?: unknown) => void;
 
 /**
  * Everything `Rule` and `RuleComponents` need, derived from {@link RuleProps}.
@@ -36,11 +38,11 @@ export interface RuleParts {
   readonly showFieldSelector: boolean;
   readonly showValueControls: boolean;
   readonly showValueSourceSelector: boolean;
-  readonly onChangeField: (value: AnyContext, context?: AnyContext) => void;
-  readonly onChangeOperator: (value: AnyContext, context?: AnyContext) => void;
-  readonly onChangeMatchMode: (value: AnyContext, context?: AnyContext) => void;
-  readonly onChangeValueSource: (value: AnyContext, context?: AnyContext) => void;
-  readonly onChangeValue: (value: AnyContext, context?: AnyContext) => void;
+  readonly onChangeField: (value: AnyValue, context?: unknown) => void;
+  readonly onChangeOperator: (value: AnyValue, context?: unknown) => void;
+  readonly onChangeMatchMode: (value: AnyValue, context?: unknown) => void;
+  readonly onChangeValueSource: (value: AnyValue, context?: unknown) => void;
+  readonly onChangeValue: (value: AnyValue, context?: unknown) => void;
   readonly cloneRule: ActionHandler;
   readonly toggleLockRule: ActionHandler;
   readonly toggleMuteRule: ActionHandler;
@@ -81,9 +83,8 @@ export const createRuleParts = (getProps: () => RuleProps): RuleParts => {
     })
   );
 
-  // Resolved from `schema` rather than `schema.manager.getRuleContext(path)` so that a
-  // replacement `rule` component—or a subquery, whose rules are not in the manager's query at
-  // all—can still be rendered.
+  // Resolved from `schema` rather than by path lookup into the root query, so a replacement
+  // `rule` component—or a subquery, whose rules aren't in the root query—still renders.
   const resolvers = $derived({
     fields: schema.fields,
     fieldMap: schema.fieldMap,
@@ -94,8 +95,10 @@ export const createRuleParts = (getProps: () => RuleProps): RuleParts => {
     getValueEditorType: schema.getValueEditorType,
     getValues: schema.getValues,
     getValueSources: schema.getValueSources,
-    getSubQueryBuilderProps: schema.getSubQueryBuilderProps,
-  } as unknown as RuleContextResolvers<FullField>);
+    // Spread re-types the props interface as an object literal, which core's
+    // `Record<string, unknown>` return type accepts.
+    getSubQueryBuilderProps: (field, misc) => ({ ...schema.getSubQueryBuilderProps(field, misc) }),
+  } satisfies RuleContextResolvers<FullField>);
 
   const ctx = $derived(
     deriveRuleContext(rule, resolvers, { validationMap: schema.validationMap, id: props.id })
@@ -126,9 +129,10 @@ export const createRuleParts = (getProps: () => RuleProps): RuleParts => {
     })
   );
 
-  const changeHandler = (prop: string) => (value: AnyContext, context?: AnyContext) => {
-    if (!disabled) props.actions.onPropChange(prop as never, value, path, context);
-  };
+  const changeHandler =
+    (prop: Parameters<QueryActions['onPropChange']>[0]) => (value: AnyValue, context?: unknown) => {
+      if (!disabled) props.actions.onPropChange(prop, value, path, context);
+    };
 
   const onChangeField = $derived(changeHandler('field'));
   const onChangeOperator = $derived(changeHandler('operator'));

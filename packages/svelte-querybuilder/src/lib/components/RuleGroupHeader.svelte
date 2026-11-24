@@ -189,6 +189,28 @@
     },
   });
 
+  const ungroupRuleGroupActionProps = withCommonProps(common, {
+    testID: TestID.ungroup,
+    get label() {
+      return translations.ungroupRuleGroup.label;
+    },
+    get title() {
+      return translations.ungroupRuleGroup.title;
+    },
+    get className() {
+      return classNames.ungroup;
+    },
+    get handleOnClick() {
+      return parts.ungroupRuleGroup;
+    },
+    get rules() {
+      return ruleGroup.rules;
+    },
+    get ruleOrGroup() {
+      return ruleGroup;
+    },
+  });
+
   const lockGroupActionProps = withCommonProps(common, {
     testID: TestID.lockGroup,
     get label() {
@@ -311,6 +333,9 @@
 {/if}<!--
 -->{#if schema.showCloneButtons && path.length > 0}
   <Control control={controls.cloneGroupAction} props={cloneGroupActionProps} />
+{/if}<!--
+-->{#if schema.showUngroupButtons && path.length > 0}
+  <Control control={controls.ungroupAction} props={ungroupRuleGroupActionProps} />
 {/if}<!--
 -->{#if schema.showLockButtons}
   <Control control={controls.lockGroupAction} props={lockGroupActionProps} />

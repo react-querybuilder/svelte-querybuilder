@@ -181,7 +181,7 @@ export const mergeTranslations = (
   contextT?: Partial<Translations>
 ): TranslationsFull =>
   mergeAnyTranslations(
-    defaultTranslations as unknown as Record<string, Record<string, unknown>>,
+    defaultTranslations as Record<string, Record<string, unknown>>,
     contextT as Record<string, Record<string, unknown>> | undefined,
     propsT as Record<string, Record<string, unknown>> | undefined
   ) as unknown as TranslationsFull;

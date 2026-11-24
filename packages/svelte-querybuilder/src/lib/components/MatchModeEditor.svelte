@@ -82,7 +82,7 @@
       field: '',
       operator: '',
       value: thresholdNum,
-      valueSource: 'value',
+      valueSource: 'value' as const,
       fieldData: thresholdFieldData,
       schema: thresholdSchema,
       path: dummyPath,

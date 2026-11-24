@@ -26,17 +26,14 @@
   const schema = $derived(props.schema);
 
   const subQueryBuilderProps = $derived(
-    schema.getSubQueryBuilderProps(props.rule.field as never, {
-      fieldData: parts.fieldData as never,
-    }) as Record<string, unknown>
+    schema.getSubQueryBuilderProps(props.rule.field, { fieldData: parts.fieldData })
   );
 
   const subproperties = $derived(
     prepareOptionList<FullField>({
       placeholder: props.translations.fields,
-      optionList: (parts.fieldData.subproperties ??
-        subQueryBuilderProps.fields ??
-        defaultSubproperties) as never,
+      optionList:
+        parts.fieldData.subproperties ?? subQueryBuilderProps.fields ?? defaultSubproperties,
       autoSelectOption: schema.autoSelectField || !!parts.fieldData.subproperties,
     }).optionList
   );

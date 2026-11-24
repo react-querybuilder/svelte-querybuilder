@@ -175,6 +175,12 @@ export interface ControlPropsMap<F extends FullField, O extends string> {
    */
   shiftActions: ShiftActionsProps;
   /**
+   * Ungroups the current rule group.
+   *
+   * @default ActionElement
+   */
+  ungroupAction: ActionProps;
+  /**
    * Undo/redo buttons for the outermost group, rendered when the `showUndoRedo` prop is `true`.
    *
    * @default UndoRedoActions

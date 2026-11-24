@@ -110,6 +110,83 @@ describe('RuleGroup', () => {
     expect(screen.getAllByTestId(TestID.ruleGroup)).toHaveLength(3);
   });
 
+  it('renders ungroup buttons on non-root groups only', () => {
+    render(QueryBuilder, { props: { fields, defaultQuery: nested, showUngroupButtons: true } });
+
+    const [ungroup] = screen.getAllByTestId(TestID.ungroup);
+    expect(screen.getAllByTestId(TestID.ungroup)).toHaveLength(1);
+    expect(ungroup.closest(`[data-testid="${TestID.ruleGroup}"]`)).toHaveAttribute(
+      'data-path',
+      '[1]'
+    );
+    expect(ungroup).toHaveClass(sc.ungroup);
+    expect(ungroup).toHaveTextContent('⊟');
+    expect(ungroup).toHaveAttribute('title', 'Ungroup');
+  });
+
+  it('ungroups a group', async () => {
+    const onQueryChange = vi.fn();
+    render(QueryBuilder, {
+      props: { fields, defaultQuery: nested, showUngroupButtons: true, onQueryChange },
+    });
+
+    await userEvent.click(screen.getByTestId(TestID.ungroup));
+
+    const next = onQueryChange.mock.lastCall![0] as RuleGroupType;
+    expect(next.rules.map(r => r.id)).toEqual(['r1', 'r2']);
+    expect(screen.getAllByTestId(TestID.ruleGroup)).toHaveLength(1);
+  });
+
+  it('cancels an ungroup when `onUngroup` returns false', async () => {
+    const onQueryChange = vi.fn();
+    const onUngroup = vi.fn(() => false);
+    render(QueryBuilder, {
+      props: { fields, defaultQuery: nested, showUngroupButtons: true, onQueryChange, onUngroup },
+    });
+    // Root has no `id`, so mount emits once.
+    onQueryChange.mockClear();
+
+    await userEvent.click(screen.getByTestId(TestID.ungroup));
+
+    expect(onUngroup).toHaveBeenCalledOnce();
+    expect(onQueryChange).not.toHaveBeenCalled();
+    expect(screen.getAllByTestId(TestID.ruleGroup)).toHaveLength(2);
+  });
+
+  it('substitutes the query returned by `onUngroup`', async () => {
+    const onQueryChange = vi.fn();
+    const replacement: RuleGroupType = { id: 'root', combinator: 'or', rules: [rule('r9')] };
+    render(QueryBuilder, {
+      props: {
+        fields,
+        defaultQuery: nested,
+        showUngroupButtons: true,
+        onQueryChange,
+        onUngroup: () => replacement,
+      },
+    });
+
+    await userEvent.click(screen.getByTestId(TestID.ungroup));
+
+    expect(onQueryChange.mock.lastCall![0]).toMatchObject({
+      combinator: 'or',
+      rules: [{ id: 'r9' }],
+    });
+  });
+
+  it('hides ungroup buttons when `ungroupAction` is null', () => {
+    render(QueryBuilder, {
+      props: {
+        fields,
+        defaultQuery: nested,
+        showUngroupButtons: true,
+        controls: { ungroupAction: null },
+      },
+    });
+
+    expect(screen.queryByTestId(TestID.ungroup)).toBeNull();
+  });
+
   it('locks a group', async () => {
     const onQueryChange = vi.fn();
     render(QueryBuilder, {

@@ -20,6 +20,7 @@ import {
   renderAndExtractPostFlush,
   renderPairs,
   stripUnrecordedChannels,
+  textChannelMessage,
 } from './cases';
 import type { ClassNameEntry } from './extract';
 
@@ -64,7 +65,9 @@ describe('conformance: classnames (post-flush)', () => {
       const { classNames } = await renderAndExtractPostFlush(pair);
       const recorded = stripUnrecordedChannels(classNames, fixture);
 
-      expect(recorded).toEqual(expected.classNames);
+      expect(recorded, textChannelMessage(recorded, expected.classNames)).toEqual(
+        expected.classNames
+      );
 
       if (expected.differsFromStatic) {
         // A port that never runs its reset effect would pass both layers without this.

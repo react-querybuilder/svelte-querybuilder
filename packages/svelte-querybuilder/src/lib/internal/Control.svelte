@@ -8,14 +8,10 @@
 
   `props` is forwarded as a single object, matching the snippet's single-argument signature.
 -->
-<script lang="ts">
+<script lang="ts" generics="P extends Record<string, unknown>">
   import type { Control } from '../types/controls.js';
 
-  const {
-    control,
-    props,
-    // oxlint-disable-next-line typescript/no-explicit-any
-  }: { control: Control<any> | null | undefined; props: any } = $props();
+  const { control, props }: { control: Control<P> | null | undefined; props: P } = $props();
 </script>
 
 {#if control == null}

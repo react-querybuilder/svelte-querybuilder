@@ -88,6 +88,7 @@
   let showLockButtons = $state(true);
   let showMuteButtons = $state(false);
   let showUndoRedo = $state(true);
+  let showUngroupButtons = $state(true);
   let disabled = $state(false);
   let parseNumbers = $state(false);
 
@@ -99,6 +100,7 @@
     showLockButtons,
     showMuteButtons,
     showUndoRedo,
+    showUngroupButtons,
     disabled,
     parseNumbers,
   });
@@ -145,6 +147,7 @@
   <label><input type="checkbox" bind:checked={showLockButtons} /> showLockButtons</label>
   <label><input type="checkbox" bind:checked={showMuteButtons} /> showMuteButtons</label>
   <label><input type="checkbox" bind:checked={showUndoRedo} /> showUndoRedo</label>
+  <label><input type="checkbox" bind:checked={showUngroupButtons} /> showUngroupButtons</label>
   <label><input type="checkbox" bind:checked={disabled} /> disabled</label>
   <label><input type="checkbox" bind:checked={parseNumbers} /> parseNumbers</label>
 </div>

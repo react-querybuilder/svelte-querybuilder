@@ -66,6 +66,7 @@ The DOM is class-compatible with React Query Builder, so existing RQB stylesheet
 - [Differences from React Query Builder](./docs/differences-from-react-querybuilder.md) — start here if you know RQB
 - [Customization](./docs/customization.md) — snippets, `controls`, translations, context
 - [Styling](./docs/styling.md)
+- [Reactivity notes](./docs/reactivity.md) — stable `query` references, context getters, writing custom controls
 - Concepts, field/operator configuration, query formats, and parsers: the [React Query Builder documentation](https://react-querybuilder.js.org/docs/intro) applies directly, since the logic layer is shared.
 
 ## Examples
@@ -84,6 +85,18 @@ Not in v1, and not planned for the near term:
 - Async option lists
 - A Redux store or a `qbId` registry — hold the query yourself and use `bind:query`
 - Deprecated props carried over from React Query Builder
+
+## Stability and versioning
+
+Pre-1.0: minor releases (`0.x`) may break the component API. Breaking changes are listed in [`CHANGELOG.md`](./CHANGELOG.md).
+
+**Core version policy.** `@react-querybuilder/core` is a caret dependency on a minor (currently `^8.24.3`). The conformance fixtures are pinned to the matching React Query Builder tag, and the two move together: raising the core minimum means bumping the fixture tag and passing conformance against it. Core's public API, including the headless derivations this package uses, is semver-covered upstream.
+
+**What blocks 1.0:**
+
+- A release with no breaking change to the component API: props, control names and their prop types, `Schema`, the `create*Parts` helpers, and the context functions.
+- DOM conformance green against the then-current React Query Builder release, with the text channel enabled.
+- The non-goals above staying non-goals. 1.0 doesn't depend on any of them, and adding one later won't be a breaking change.
 
 ## License
 

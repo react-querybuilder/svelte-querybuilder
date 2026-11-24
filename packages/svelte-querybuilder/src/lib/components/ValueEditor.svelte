@@ -20,7 +20,7 @@
   import Control from '../internal/Control.svelte';
   import Label from '../internal/Label.svelte';
   import { createValueEditorReset } from '../reactive/valueEditorEffect.svelte.js';
-  import type { ValueEditorProps, ValueSelectorProps } from '../types/props.js';
+  import type { ValueEditorProps } from '../types/props.js';
 
   const props: ValueEditorProps<F, O> = $props();
 
@@ -86,7 +86,7 @@
     field: props.field,
     fieldData: props.fieldData,
     rule: props.rule,
-  } as unknown as ValueSelectorProps);
+  });
 
   const isBetween = $derived(
     (props.operator === 'between' || props.operator === 'notBetween') &&
