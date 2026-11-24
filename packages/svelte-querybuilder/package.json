@@ -45,6 +45,9 @@
     "./dist/*.scss": "./dist/*.scss",
     "./package.json": "./package.json"
   },
+  "imports": {
+    "#lib/*": "./src/lib/*"
+  },
   "scripts": {
     "prepack": "bun run ./scripts/copy-readme.ts",
     "postpack": "rm -f README.md",
@@ -63,17 +66,17 @@
     "svelte": "^5.25"
   },
   "dependencies": {
-    "@react-querybuilder/core": "^8.24.3"
+    "@react-querybuilder/core": "^8.28.0"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
-    "@sveltejs/adapter-node": "^5.5.7",
-    "@sveltejs/kit": "^2.70.3",
-    "@sveltejs/package": "^2.5.8",
-    "@sveltejs/vite-plugin-svelte": "^7.3.1",
-    "svelte": "^5.57.1",
-    "svelte-check": "^4.7.6",
-    "typescript": "^5.9.3"
+    "@sveltejs/adapter-node": "^6.0.5",
+    "@sveltejs/kit": "^3.4.0",
+    "@sveltejs/package": "^3.0.3",
+    "@sveltejs/vite-plugin-svelte": "^7.3.2",
+    "svelte": "^5.59.1",
+    "svelte-check": "^4.7.8",
+    "typescript": "^6"
   },
   "publishConfig": {
     "access": "public"

@@ -13,10 +13,11 @@
 
 import { preview } from 'vite';
 
-const fail = (message: string): never => {
+// Declaration, not arrow: TS only narrows on `never`-returning calls to declared functions
+function fail(message: string): never {
   console.error(`\u001B[31m✗ SSR gate: ${message}\u001B[39m`);
   process.exit(1);
-};
+}
 
 // Port 0 => an ephemeral port, so concurrent runs and stale processes can't collide.
 const server = await preview({

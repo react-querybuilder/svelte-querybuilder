@@ -8,7 +8,7 @@ import { defineConfig } from 'vitest/config';
  * `vitest run` would make a fresh clone fail for a reason unrelated to the code.
  */
 export default defineConfig({
-  plugins: [svelte(), svelteTesting()],
+  plugins: [svelte({ compilerOptions: { runes: true } }), svelteTesting()],
   test: {
     name: 'conformance',
     environment: 'jsdom',

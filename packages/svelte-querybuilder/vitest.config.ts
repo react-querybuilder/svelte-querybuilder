@@ -9,7 +9,7 @@ import { defineConfig } from 'vitest/config';
  * `projects` entry, so it would look for `src/app.html` in the wrong place.
  */
 export default defineConfig({
-  plugins: [svelte(), svelteTesting()],
+  plugins: [svelte({ compilerOptions: { runes: true } }), svelteTesting()],
   test: {
     environment: 'jsdom',
     globals: true,

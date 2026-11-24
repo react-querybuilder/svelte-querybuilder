@@ -6,7 +6,7 @@
     type FormatQueryOptions,
     type RuleGroupType,
     type RuleGroupTypeIC,
-  } from '$lib/index.js';
+  } from '#lib/index.js';
 
   const fields: Field[] = [
     { name: 'firstName', label: 'First name', placeholder: 'Enter first name' },

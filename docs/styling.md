@@ -9,7 +9,6 @@ Two prebuilt stylesheets ship in `dist`:
 ```ts
 // Full: layout + default aesthetic (borders, colors, branch lines).
 import 'svelte-querybuilder/dist/query-builder.css';
-
 // Structure only: flex layout and spacing, no colors or borders.
 import 'svelte-querybuilder/dist/query-builder-layout.css';
 ```

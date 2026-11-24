@@ -10,7 +10,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import '@react-querybuilder/core/dist/query-builder.scss';
-  import '$lib/styles/_svelte.scss';
+  import '#lib/styles/_svelte.scss';
   import './playground.css';
 
   const { children }: { children: Snippet } = $props();

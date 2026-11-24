@@ -1,6 +1,6 @@
 <script lang="ts">
   import { QueryBuilder, type ActionProps } from 'svelte-querybuilder';
-  import { fields, query as initialQuery } from '$lib/query';
+  import { fields, query as initialQuery } from '#lib/query.js';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();

@@ -1,5 +1,5 @@
 import { formatQuery } from 'svelte-querybuilder';
-import { query } from '$lib/query';
+import { query } from '#lib/query.js';
 import type { PageServerLoad } from './$types';
 
 // The point of this example is server-side rendering, so opt out of prerendering explicitly.
