@@ -34,9 +34,9 @@ export interface RuleGroupParts {
   readonly accessibleDescription: string;
   /** Per-child path and disabled state, in `ruleGroup.rules` order. */
   readonly pathsMemo: ReturnType<typeof derivePathInfo>;
-  readonly onCombinatorChange: (value: string) => void;
-  readonly onIndependentCombinatorChange: (value: string, index: number) => void;
-  readonly onNotToggleChange: (checked: boolean) => void;
+  readonly onCombinatorChange: (value: string, context?: unknown) => void;
+  readonly onIndependentCombinatorChange: (value: string, index: number, context?: unknown) => void;
+  readonly onNotToggleChange: (checked: boolean, context?: unknown) => void;
   readonly addRule: ActionHandler;
   readonly addGroup: ActionHandler;
   readonly cloneGroup: ActionHandler;
@@ -119,54 +119,58 @@ export const createRuleGroupParts = (getProps: () => RuleGroupProps): RuleGroupP
     schema.accessibleDescriptionGenerator({ path, qbId: '' })
   );
 
-  const onCombinatorChange = (value: string) => {
-    if (!disabled) props.actions.onPropChange('combinator', value, path);
+  const onCombinatorChange = (value: string, context?: any) => {
+    if (!disabled) props.actions.onPropChange('combinator', value, path, context);
   };
 
-  const onIndependentCombinatorChange = (value: string, index: number) => {
-    if (!disabled) props.actions.onPropChange('combinator', value, [...path, index]);
+  const onIndependentCombinatorChange = (value: string, index: number, context?: any) => {
+    if (!disabled) props.actions.onPropChange('combinator', value, [...path, index], context);
   };
 
-  const onNotToggleChange = (checked: boolean) => {
-    if (!disabled) props.actions.onPropChange('not', checked, path);
+  const onNotToggleChange = (checked: boolean, context?: any) => {
+    if (!disabled) props.actions.onPropChange('not', checked, path, context);
   };
 
-  const addRule = stopPropagation((_event, context) => {
+  const addRule = stopPropagation((_event, context?: any) => {
     if (!disabled) props.actions.onRuleAdd(schema.createRule(), path, context);
   });
 
-  const addGroup = stopPropagation((_event, context) => {
+  const addGroup = stopPropagation((_event, context?: any) => {
     if (!disabled) props.actions.onGroupAdd(schema.createRuleGroup(), path, context);
   });
 
-  const cloneGroup = stopPropagation(() => {
+  const cloneGroup = stopPropagation((_event, context?: any) => {
     if (!disabled) {
-      props.actions.moveRule(path, [...getParentPath(path), path.at(-1)! + 1], true);
+      props.actions.moveRule(path, [...getParentPath(path), path.at(-1)! + 1], true, context);
     }
   });
 
-  const toggleLockGroup = stopPropagation(() => {
-    props.actions.onPropChange('disabled', !disabled, path);
+  const toggleLockGroup = stopPropagation((_event, context?: any) => {
+    props.actions.onPropChange('disabled', !disabled, path, context);
   });
 
-  const toggleMuteGroup = stopPropagation(() => {
-    props.actions.onPropChange('muted', !ruleGroup.muted, path);
+  const toggleMuteGroup = stopPropagation((_event, context?: any) => {
+    props.actions.onPropChange('muted', !ruleGroup.muted, path, context);
   });
 
-  const removeGroup = stopPropagation(() => {
+  const removeGroup = stopPropagation(_event => {
     if (!disabled) props.actions.onGroupRemove(path);
   });
 
-  const shiftGroupUp = stopPropagation(event => {
-    if (!disabled && !props.shiftUpDisabled) props.actions.moveRule(path, 'up', event?.altKey);
+  const shiftGroupUp = stopPropagation((event, context?: any) => {
+    if (!disabled && !props.shiftUpDisabled) {
+      props.actions.moveRule(path, 'up', event?.altKey, context);
+    }
   });
 
-  const shiftGroupDown = stopPropagation(event => {
-    if (!disabled && !props.shiftDownDisabled) props.actions.moveRule(path, 'down', event?.altKey);
+  const shiftGroupDown = stopPropagation((event, context?: any) => {
+    if (!disabled && !props.shiftDownDisabled) {
+      props.actions.moveRule(path, 'down', event?.altKey, context);
+    }
   });
 
-  const ungroupRuleGroup = stopPropagation(() => {
-    if (!disabled) props.actions.ungroupRuleGroup(path);
+  const ungroupRuleGroup = stopPropagation((_event, context?: any) => {
+    if (!disabled) props.actions.ungroupRuleGroup(path, context);
   });
 
   return {
