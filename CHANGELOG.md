@@ -7,6 +7,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-26
+
 Query state is now owned entirely by Svelte runes. `QueryManager` is gone from this package: core's pure functions (`add`/`remove`/`update`/`move`, `createQueryActions`, `prepareOptionList`, `deriveRuleContext`, `shouldCoalesce`) supply the logic, and the reactive graph lives in `$state`/`$derived`. `createQueryBuilderState` contains no `$effect` at all, and no longer relies on deep-compare, live closures, a config-version counter, subscription mirroring, or try/catch around immer's freeze.
 
 Control elements are now composed the Svelte way. Each of the 25 control names is a top-level snippet prop, so `{#snippet valueEditor(props)}` works as a direct child of `<QueryBuilder>`, and the internal component-ABI trick that used to make snippets and components interchangeable is gone.
@@ -116,6 +118,7 @@ First release. A Svelte 5 port of [React Query Builder](https://react-querybuild
 
 - Axe's best-practice rule `label-title-only` fires on every selector and text editor: React Query Builder labels them with `title` alone, and full DOM parity is a locked decision for this port. It is not a WCAG failure (`title` does produce an accessible name), and the a11y suite asserts it is the _only_ best-practice violation, so any other regression still fails. Supply a labeled control through `controlElements` or a snippet if you need a visible label.
 
-[unreleased]: https://github.com/react-querybuilder/svelte-querybuilder/compare/v0.1.1...HEAD
+[unreleased]: https://github.com/react-querybuilder/svelte-querybuilder/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/react-querybuilder/svelte-querybuilder/releases/tag/v0.2.0
 [0.1.1]: https://github.com/react-querybuilder/svelte-querybuilder/releases/tag/v0.1.1
 [0.1.0]: https://github.com/react-querybuilder/svelte-querybuilder/releases/tag/v0.1.0
